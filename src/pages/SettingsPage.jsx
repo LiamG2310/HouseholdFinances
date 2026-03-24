@@ -3,6 +3,7 @@ import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 
+
 const CURRENCIES = [
   { value: 'GBP', label: '£ GBP — British Pound' },
   { value: 'EUR', label: '€ EUR — Euro' },
@@ -13,18 +14,7 @@ const CURRENCIES = [
 export function SettingsPage() {
   const { settings, updateSettings } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
-  const [storedPin, setStoredPin] = useLocalStorage('hf_pin', '1234')
   const [, setUnlocked] = useLocalStorage('hf_unlocked', false)
-  const [newPin, setNewPin] = useState('')
-  const [pinMsg, setPinMsg] = useState('')
-
-  const handleChangePin = () => {
-    if (!/^\d{4}$/.test(newPin)) { setPinMsg('PIN must be exactly 4 digits'); return }
-    setStoredPin(newPin)
-    setNewPin('')
-    setPinMsg('PIN updated')
-    setTimeout(() => setPinMsg(''), 2000)
-  }
 
   const handleLock = () => {
     setUnlocked(false)
@@ -134,25 +124,7 @@ export function SettingsPage() {
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
         <h2 className="text-sm font-medium text-slate-400">Security</h2>
-        <div>
-          <label className={labelCls}>Change PIN</label>
-          <div className="flex gap-2">
-            <input
-              className={inputCls}
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="New 4-digit PIN"
-              value={newPin}
-              onChange={e => { setNewPin(e.target.value.replace(/\D/g, '')); setPinMsg('') }}
-            />
-            <button
-              onClick={handleChangePin}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium whitespace-nowrap"
-            >Save</button>
-          </div>
-          {pinMsg && <p className={`text-xs mt-1 ${pinMsg === 'PIN updated' ? 'text-green-400' : 'text-red-400'}`}>{pinMsg}</p>}
-        </div>
+        <p className="text-xs text-slate-500">PIN is shared across all devices. To change it, update the PIN secret in GitHub and redeploy.</p>
         <button
           onClick={handleLock}
           className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium"

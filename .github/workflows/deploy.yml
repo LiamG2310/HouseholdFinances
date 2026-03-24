@@ -31,6 +31,8 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+        env:
+          VITE_PIN: ${{ secrets.VITE_PIN }}
 
       - uses: actions/configure-pages@v4
         with:

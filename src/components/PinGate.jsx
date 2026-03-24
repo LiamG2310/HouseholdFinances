@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 
-const CORRECT_PIN = '1234'
+// PIN is set at build time via VITE_PIN env variable (GitHub secret).
+// Falls back to '1234' for local development.
+const CORRECT_PIN = import.meta.env.VITE_PIN || '1234'
 const SESSION_KEY = 'hf_unlocked'
 
 export function PinGate({ children }) {
-  const [storedPin, setStoredPin] = useLocalStorage('hf_pin', CORRECT_PIN)
   const [unlocked, setUnlocked] = useLocalStorage(SESSION_KEY, false)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
@@ -20,7 +21,7 @@ export function PinGate({ children }) {
     setError(false)
 
     if (next.length === 4) {
-      if (next === storedPin) {
+      if (next === CORRECT_PIN) {
         setUnlocked(true)
       } else {
         setShake(true)
