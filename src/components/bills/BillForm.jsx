@@ -1,0 +1,143 @@
+import { useState } from 'react'
+import { Modal } from '../shared/Modal.jsx'
+import { CATEGORIES, FREQUENCIES } from '../../utils/billUtils.js'
+import { today } from '../../utils/dateUtils.js'
+
+const DEFAULTS = {
+  name: '',
+  amount: '',
+  category: 'other',
+  frequency: 'monthly',
+  dayOfMonth: 1,
+  nextDueDate: today(),
+  assignedTo: 'joint',
+  notes: '',
+}
+
+export function BillForm({ bill, onSave, onClose, settings }) {
+  const [form, setForm] = useState(bill ? {
+    ...DEFAULTS,
+    ...bill,
+    amount: String(bill.amount),
+    dayOfMonth: bill.dayOfMonth ?? 1,
+  } : DEFAULTS)
+
+  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.amount) return
+    onSave({
+      ...form,
+      amount: parseFloat(form.amount),
+      dayOfMonth: parseInt(form.dayOfMonth) || 1,
+    })
+  }
+
+  const inputCls = 'w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500'
+  const labelCls = 'block text-sm text-slate-400 mb-1'
+
+  return (
+    <Modal title={bill ? 'Edit Bill' : 'Add Bill'} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={labelCls}>Name</label>
+          <input
+            className={inputCls}
+            value={form.name}
+            onChange={e => set('name', e.target.value)}
+            placeholder="e.g. Rent"
+            required
+          />
+        </div>
+
+        <div>
+          <label className={labelCls}>Amount ({settings.currency})</label>
+          <input
+            className={inputCls}
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.amount}
+            onChange={e => set('amount', e.target.value)}
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Category</label>
+            <select className={inputCls} value={form.category} onChange={e => set('category', e.target.value)}>
+              {CATEGORIES.map(c => (
+                <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Frequency</label>
+            <select className={inputCls} value={form.frequency} onChange={e => set('frequency', e.target.value)}>
+              {FREQUENCIES.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {form.frequency === 'monthly' && (
+          <div>
+            <label className={labelCls}>Day of month</label>
+            <input
+              className={inputCls}
+              type="number"
+              min="1"
+              max="31"
+              value={form.dayOfMonth}
+              onChange={e => set('dayOfMonth', e.target.value)}
+            />
+          </div>
+        )}
+
+        {form.frequency !== 'monthly' && (
+          <div>
+            <label className={labelCls}>
+              {form.frequency === 'one-off' ? 'Due date' : 'Next due date'}
+            </label>
+            <input
+              className={inputCls}
+              type="date"
+              value={form.nextDueDate}
+              onChange={e => set('nextDueDate', e.target.value)}
+            />
+          </div>
+        )}
+
+        <div>
+          <label className={labelCls}>Assigned to</label>
+          <select className={inputCls} value={form.assignedTo} onChange={e => set('assignedTo', e.target.value)}>
+            <option value="joint">Joint</option>
+            <option value="person1">{settings.person1Name}</option>
+            <option value="person2">{settings.person2Name}</option>
+          </select>
+        </div>
+
+        <div>
+          <label className={labelCls}>Notes (optional)</label>
+          <input
+            className={inputCls}
+            value={form.notes}
+            onChange={e => set('notes', e.target.value)}
+            placeholder="Any notes..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold mt-2"
+        >
+          {bill ? 'Save Changes' : 'Add Bill'}
+        </button>
+      </form>
+    </Modal>
+  )
+}
