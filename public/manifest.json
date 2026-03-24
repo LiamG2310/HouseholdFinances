@@ -2,7 +2,7 @@
   "name": "HomeFinances",
   "short_name": "HomeFinances",
   "description": "Household finance management for two",
-  "start_url": "/HouseholdFinances/",
+  "start_url": "./",
   "scope": "/HouseholdFinances/",
   "display": "standalone",
   "background_color": "#0f172a",
