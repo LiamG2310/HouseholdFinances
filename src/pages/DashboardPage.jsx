@@ -72,9 +72,17 @@ export function DashboardPage() {
       <div className={`bg-gradient-to-b ${statusBg} px-4 pt-6 pb-8`}>
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-slate-400 text-sm">{annual ? String(year) : monthLabel()}</p>
-              <h1 className="text-white text-xl font-bold">Overview</h1>
+            <div className="flex items-center gap-3">
+              {settings.profileImage && (
+                <div className="relative flex-shrink-0" style={{ width: '2.5rem', height: '2.5rem' }}>
+                  <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+                  <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 8px 4px rgba(0,0,0,0.4)' }} />
+                </div>
+              )}
+              <div>
+                <p className="text-slate-400 text-sm">{annual ? String(year) : monthLabel()}</p>
+                <h1 className="text-white text-xl font-bold">Overview</h1>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {!annual && (
@@ -275,15 +283,10 @@ export function DashboardPage() {
         {monthBills.length === 0 && monthlyTotal === 0 && (
           <div className="text-center py-16">
             {settings.profileImage ? (
-              <div className="mx-auto mb-3" style={{
-                width: '5rem', height: '5rem',
-                borderRadius: '50%',
-                backgroundImage: `url(${settings.profileImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-                maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-              }} />
+              <div className="relative mx-auto mb-3" style={{ width: '5rem', height: '5rem' }}>
+                <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+                <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 18px 10px rgba(0,0,0,0.45)' }} />
+              </div>
             ) : (
               <div className="text-5xl mb-3">🏠</div>
             )}

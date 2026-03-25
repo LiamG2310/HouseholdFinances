@@ -158,15 +158,10 @@ export function SettingsPage() {
         <h2 className="text-sm font-medium text-slate-400">Profile picture</h2>
         <div className="flex items-center gap-4">
           {settings.profileImage ? (
-            <div style={{
-              width: '4rem', height: '4rem', flexShrink: 0,
-              borderRadius: '50%',
-              backgroundImage: `url(${settings.profileImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-              maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-            }} />
+            <div className="relative flex-shrink-0" style={{ width: '4rem', height: '4rem' }}>
+              <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+              <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 14px 8px rgba(0,0,0,0.45)' }} />
+            </div>
           ) : (
             <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-2xl flex-shrink-0">🏠</div>
           )}

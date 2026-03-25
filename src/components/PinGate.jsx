@@ -22,7 +22,7 @@ export function PinGate({ children }) {
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
   const timerRef = useRef(null)
-  const profileImage = getProfileImage()
+  const [profileImage] = useState(() => getProfileImage())
 
   // Auto-lock when the 30-minute window expires while the app is open
   useEffect(() => {
@@ -81,15 +81,10 @@ export function PinGate({ children }) {
         className="mb-2"
       >
         {profileImage ? (
-          <div style={{
-            width: '5rem', height: '5rem',
-            borderRadius: '50%',
-            backgroundImage: `url(${profileImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-            maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
-          }} />
+          <div className="relative" style={{ width: '5rem', height: '5rem' }}>
+            <img src={profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+            <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 18px 10px rgba(0,0,0,0.55)' }} />
+          </div>
         ) : (
           <span className="text-5xl">🏠</span>
         )}
