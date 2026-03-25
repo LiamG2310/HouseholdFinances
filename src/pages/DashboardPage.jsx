@@ -91,15 +91,12 @@ export function DashboardPage() {
                   <p className="text-slate-300 text-sm">in month</p>
                 </div>
               )}
-              <div className="flex bg-slate-800 bg-opacity-50 rounded-lg p-0.5 text-xs">
-                <button
-                  onClick={() => setAnnual(false)}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors ${!annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}
-                >Mo</button>
-                <button
-                  onClick={() => setAnnual(true)}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors ${annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}
-                >Yr</button>
+              <div
+                className="flex bg-slate-800 bg-opacity-50 rounded-lg p-0.5 text-xs cursor-pointer"
+                onClick={() => setAnnual(a => !a)}
+              >
+                <div className={`px-2.5 py-1 rounded-md font-medium transition-colors ${!annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}>Mo</div>
+                <div className={`px-2.5 py-1 rounded-md font-medium transition-colors ${annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}>Yr</div>
               </div>
             </div>
           </div>
