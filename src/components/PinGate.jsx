@@ -5,6 +5,13 @@ const CORRECT_PIN = import.meta.env.VITE_PIN || '1234'
 const EXPIRY_KEY = 'hf_lock_expiry'
 const SESSION_MS = 30 * 60 * 1000 // 30 minutes
 
+function getProfileImage() {
+  try {
+    const s = JSON.parse(localStorage.getItem('hf_settings') || '{}')
+    return s.profileImage ?? null
+  } catch { return null }
+}
+
 function getExpiry() { return parseInt(localStorage.getItem(EXPIRY_KEY) || '0') }
 function saveExpiry() { localStorage.setItem(EXPIRY_KEY, String(Date.now() + SESSION_MS)) }
 function clearExpiry() { localStorage.removeItem(EXPIRY_KEY) }
@@ -15,6 +22,7 @@ export function PinGate({ children }) {
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
   const timerRef = useRef(null)
+  const profileImage = getProfileImage()
 
   // Auto-lock when the 30-minute window expires while the app is open
   useEffect(() => {
@@ -70,15 +78,29 @@ export function PinGate({ children }) {
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-        className="text-5xl mb-2"
-      >🏠</motion.div>
-      <h1 className="text-xl font-bold text-white mb-1">HomeFinances</h1>
+        className="mb-2"
+      >
+        {profileImage ? (
+          <div style={{
+            width: '5rem', height: '5rem',
+            borderRadius: '50%',
+            backgroundImage: `url(${profileImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+            maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+          }} />
+        ) : (
+          <span className="text-5xl">🏠</span>
+        )}
+      </motion.div>
+      <h1 className="text-xl font-bold text-white mb-1">Our Home Finances</h1>
       <p className="text-slate-400 text-sm mb-10">Enter your PIN to continue</p>
 
       {/* Dots */}
       <motion.div
         key={shakeKey}
-        className="flex gap-4 mb-10"
+        className="flex gap-5 mb-10"
         animate={error ? { x: [0, -10, 10, -10, 10, 0] } : {}}
         transition={{ duration: 0.4 }}
       >
@@ -95,13 +117,13 @@ export function PinGate({ children }) {
                 : 'rgb(71 85 105)',
             }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className="w-4 h-4 rounded-full border-2"
+            className="w-5 h-5 rounded-full border-2"
           />
         ))}
       </motion.div>
 
       {/* Keypad */}
-      <div className="grid grid-cols-3 gap-4 w-64">
+      <div className="grid grid-cols-3 gap-4 w-72">
         {DIGITS.flat().map((d, i) => {
           if (d === null) return <div key={i} />
           return (
@@ -109,7 +131,7 @@ export function PinGate({ children }) {
               key={i}
               whileTap={{ scale: 0.85 }}
               onClick={() => d === '⌫' ? handleDelete() : handleDigit(d)}
-              className={`h-16 rounded-2xl text-xl font-semibold transition-colors ${
+              className={`h-[4.5rem] rounded-2xl text-xl font-semibold transition-colors ${
                 d === '⌫'
                   ? 'text-slate-400 hover:text-white hover:bg-slate-700'
                   : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'

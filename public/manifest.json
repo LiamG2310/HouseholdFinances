@@ -1,6 +1,6 @@
 {
-  "name": "HomeFinances",
-  "short_name": "HomeFinances",
+  "name": "Our Home Finances",
+  "short_name": "Our Finances",
   "description": "Household finance management for two",
   "start_url": "./",
   "scope": "/HouseholdFinances/",

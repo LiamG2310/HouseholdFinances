@@ -154,6 +154,59 @@ export function SettingsPage() {
         )}
       </div>
 
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <h2 className="text-sm font-medium text-slate-400">Profile picture</h2>
+        <div className="flex items-center gap-4">
+          {settings.profileImage ? (
+            <div style={{
+              width: '4rem', height: '4rem', flexShrink: 0,
+              borderRadius: '50%',
+              backgroundImage: `url(${settings.profileImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+              maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+            }} />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-2xl flex-shrink-0">🏠</div>
+          )}
+          <div className="flex flex-col gap-2 flex-1">
+            <label className="block w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium text-center cursor-pointer">
+              {settings.profileImage ? 'Change picture' : 'Upload picture'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files[0]
+                  if (!file) return
+                  const img = new Image()
+                  const url = URL.createObjectURL(file)
+                  img.onload = () => {
+                    const size = 256
+                    const canvas = document.createElement('canvas')
+                    canvas.width = size; canvas.height = size
+                    const ctx = canvas.getContext('2d')
+                    const scale = Math.max(size / img.width, size / img.height)
+                    const w = img.width * scale, h = img.height * scale
+                    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
+                    URL.revokeObjectURL(url)
+                    updateSettings({ profileImage: canvas.toDataURL('image/jpeg', 0.8) })
+                  }
+                  img.src = url
+                }}
+              />
+            </label>
+            {settings.profileImage && (
+              <button
+                onClick={() => updateSettings({ profileImage: null })}
+                className="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-400 text-sm font-medium"
+              >Remove</button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
         <h2 className="text-sm font-medium text-slate-400">Data</h2>
         <button

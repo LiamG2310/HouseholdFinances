@@ -274,7 +274,19 @@ export function DashboardPage() {
         {/* Empty state */}
         {monthBills.length === 0 && monthlyTotal === 0 && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-3">🏠</div>
+            {settings.profileImage ? (
+              <div className="mx-auto mb-3" style={{
+                width: '5rem', height: '5rem',
+                borderRadius: '50%',
+                backgroundImage: `url(${settings.profileImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+                maskImage: 'radial-gradient(circle, black 55%, transparent 80%)',
+              }} />
+            ) : (
+              <div className="text-5xl mb-3">🏠</div>
+            )}
             <p className="text-slate-400">Add your income and bills to get started</p>
           </div>
         )}
