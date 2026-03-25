@@ -3,6 +3,13 @@ import { Modal } from '../shared/Modal.jsx'
 import { CATEGORIES, FREQUENCIES } from '../../utils/billUtils.js'
 import { today } from '../../utils/dateUtils.js'
 
+const MONTHS = [
+  { value: 1,  label: 'Jan' }, { value: 2,  label: 'Feb' }, { value: 3,  label: 'Mar' },
+  { value: 4,  label: 'Apr' }, { value: 5,  label: 'May' }, { value: 6,  label: 'Jun' },
+  { value: 7,  label: 'Jul' }, { value: 8,  label: 'Aug' }, { value: 9,  label: 'Sep' },
+  { value: 10, label: 'Oct' }, { value: 11, label: 'Nov' }, { value: 12, label: 'Dec' },
+]
+
 const DEFAULTS = {
   name: '',
   amount: '',
@@ -10,6 +17,7 @@ const DEFAULTS = {
   frequency: 'monthly',
   dayOfMonth: 1,
   nextDueDate: today(),
+  activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12],
   assignedTo: 'joint',
   notes: '',
 }
@@ -20,9 +28,19 @@ export function BillForm({ bill, onSave, onClose, settings }) {
     ...bill,
     amount: String(bill.amount),
     dayOfMonth: bill.dayOfMonth ?? 1,
+    activeMonths: bill.activeMonths ?? DEFAULTS.activeMonths,
   } : DEFAULTS)
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  const toggleMonth = (m) => {
+    setForm(prev => ({
+      ...prev,
+      activeMonths: prev.activeMonths.includes(m)
+        ? prev.activeMonths.filter(x => x !== m)
+        : [...prev.activeMonths, m].sort((a, b) => a - b),
+    }))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -84,7 +102,7 @@ export function BillForm({ bill, onSave, onClose, settings }) {
           </div>
         </div>
 
-        {form.frequency === 'monthly' && (
+        {(form.frequency === 'monthly' || form.frequency === 'custom') && (
           <div>
             <label className={labelCls}>Day of month</label>
             <input
@@ -98,7 +116,32 @@ export function BillForm({ bill, onSave, onClose, settings }) {
           </div>
         )}
 
-        {form.frequency !== 'monthly' && (
+        {form.frequency === 'custom' && (
+          <div>
+            <label className={labelCls}>
+              Active months ({form.activeMonths.length} selected)
+            </label>
+            <div className="grid grid-cols-6 gap-1.5 mt-1">
+              {MONTHS.map(({ value, label }) => (
+                <button
+                  type="button"
+                  key={value}
+                  onClick={() => toggleMonth(value)}
+                  className={`py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    form.activeMonths.includes(value)
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+                >{label}</button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5">
+              e.g. council tax: select Apr–Jan (10 months), skip Feb & Mar
+            </p>
+          </div>
+        )}
+
+        {!['monthly', 'custom'].includes(form.frequency) && (
           <div>
             <label className={labelCls}>
               {form.frequency === 'one-off' ? 'Due date' : 'Next due date'}

@@ -1,14 +1,20 @@
 import { dateForDay, parseDate } from './dateUtils.js'
 
 // Normalise any frequency to a monthly equivalent amount
-export function toMonthly(amount, frequency) {
+// Pass the full bill object as third arg to handle 'custom' months correctly
+export function toMonthly(amount, frequency, bill = null) {
   switch (frequency) {
     case 'weekly':      return (amount * 52) / 12
     case 'fortnightly': return (amount * 26) / 12
     case 'monthly':     return amount
     case 'quarterly':   return amount / 3
+    case '6-monthly':   return amount / 6
     case 'annual':      return amount / 12
-    case 'one-off':     return amount  // treated as full amount for the month it falls in
+    case 'one-off':     return amount
+    case 'custom': {
+      const months = bill?.activeMonths?.length || 12
+      return (amount * months) / 12
+    }
     default:            return amount
   }
 }
@@ -63,6 +69,16 @@ export function getBillOccurrence(bill, year, month) {
     return null
   }
 
+  if (frequency === '6-monthly') {
+    if (!nextDueDate) return null
+    const [ny, nm] = nextDueDate.split('-').map(Number)
+    const diff = (year * 12 + month) - (ny * 12 + nm)
+    if (diff >= 0 && diff % 6 === 0) {
+      return dateForDay(year, month, parseDate(nextDueDate).getDate())
+    }
+    return null
+  }
+
   if (frequency === 'annual') {
     if (!nextDueDate) return null
     const [ny, nm] = nextDueDate.split('-').map(Number)
@@ -70,6 +86,12 @@ export function getBillOccurrence(bill, year, month) {
       return dateForDay(year, month, parseDate(nextDueDate).getDate())
     }
     return null
+  }
+
+  if (frequency === 'custom') {
+    const activeMonths = bill.activeMonths || []
+    if (!activeMonths.includes(month)) return null
+    return dateForDay(year, month, bill.dayOfMonth || 1)
   }
 
   return null
@@ -104,7 +126,9 @@ export const FREQUENCIES = [
   { value: 'monthly',     label: 'Monthly' },
   { value: 'weekly',      label: 'Weekly' },
   { value: 'fortnightly', label: 'Fortnightly' },
-  { value: 'quarterly',   label: 'Quarterly' },
+  { value: 'quarterly',   label: 'Quarterly (3-monthly)' },
+  { value: '6-monthly',   label: '6-monthly' },
   { value: 'annual',      label: 'Annual' },
+  { value: 'custom',      label: 'Custom months' },
   { value: 'one-off',     label: 'One-off' },
 ]
