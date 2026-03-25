@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
-
+import { useGist } from '../hooks/useGist.js'
 
 const CURRENCIES = [
   { value: 'GBP', label: '£ GBP — British Pound' },
@@ -10,6 +10,114 @@ const CURRENCIES = [
   { value: 'USD', label: '$ USD — US Dollar' },
   { value: 'AUD', label: 'A$ AUD — Australian Dollar' },
 ]
+
+function GistSetup() {
+  const { pat, setPat, gistId, setGistId, createGist, loadGist } = useGist()
+  const [inputPat, setInputPat] = useState('')
+  const [inputGistId, setInputGistId] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [isError, setIsError] = useState(false)
+
+  const showMsg = (text, error = false) => {
+    setMsg(text); setIsError(error)
+    if (!error) setTimeout(() => setMsg(''), 3000)
+  }
+
+  const handleConnect = async () => {
+    if (!inputPat.trim()) return showMsg('Enter your GitHub PAT', true)
+    setLoading(true)
+    try {
+      let id = inputGistId.trim()
+      if (!id) {
+        id = await createGist(inputPat.trim())
+        showMsg('Gist created!')
+      } else {
+        // Validate the Gist is accessible
+        await loadGist(inputPat.trim(), id)
+        showMsg('Connected!')
+      }
+      setPat(inputPat.trim())
+      setGistId(id)
+      setInputPat('')
+      setInputGistId('')
+    } catch (e) {
+      showMsg(e.message, true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDisconnect = () => {
+    setPat('')
+    setGistId('')
+    setMsg('')
+  }
+
+  const inputCls = 'w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 text-sm'
+  const labelCls = 'block text-xs text-slate-400 mb-1'
+
+  if (pat && gistId) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-400" />
+          <span className="text-sm text-green-400">Syncing with GitHub Gist</span>
+        </div>
+        <div>
+          <label className={labelCls}>Gist ID (use this on your other device)</label>
+          <div className="flex gap-2">
+            <input className={inputCls} value={gistId} readOnly />
+            <button
+              onClick={() => { navigator.clipboard.writeText(gistId); showMsg('Copied!') }}
+              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm"
+            >Copy</button>
+          </div>
+        </div>
+        {msg && <p className="text-xs text-green-400">{msg}</p>}
+        <button
+          onClick={handleDisconnect}
+          className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium"
+        >Disconnect Gist</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-slate-500">
+        Connect a private GitHub Gist to sync data across devices. Generate a token at{' '}
+        <span className="text-indigo-400">github.com → Settings → Developer settings → Personal access tokens</span>
+        {' '}with <span className="text-white">gist</span> scope only.
+      </p>
+      <div>
+        <label className={labelCls}>GitHub Personal Access Token</label>
+        <input
+          className={inputCls}
+          type="password"
+          value={inputPat}
+          onChange={e => setInputPat(e.target.value)}
+          placeholder="ghp_..."
+        />
+      </div>
+      <div>
+        <label className={labelCls}>Gist ID (leave blank to create a new one)</label>
+        <input
+          className={inputCls}
+          value={inputGistId}
+          onChange={e => setInputGistId(e.target.value)}
+          placeholder="e.g. abc123def456..."
+        />
+      </div>
+      {msg && <p className={`text-xs ${isError ? 'text-red-400' : 'text-green-400'}`}>{msg}</p>}
+      <button
+        onClick={handleConnect}
+        disabled={loading}
+        className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium"
+      >{loading ? 'Connecting...' : 'Connect'}</button>
+    </div>
+  )
+}
 
 export function SettingsPage() {
   const { settings, updateSettings } = useFinance()
@@ -67,12 +175,11 @@ export function SettingsPage() {
   const labelCls = 'block text-sm text-slate-400 mb-1'
 
   return (
-    <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 space-y-6">
+    <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 space-y-6 pb-24">
       <h1 className="text-xl font-bold text-white">Settings</h1>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
         <h2 className="text-sm font-medium text-slate-400">Household</h2>
-
         <div>
           <label className={labelCls}>Person 1 name</label>
           <input
@@ -81,7 +188,6 @@ export function SettingsPage() {
             onChange={e => updateSettings({ person1Name: e.target.value })}
           />
         </div>
-
         <div>
           <label className={labelCls}>Person 2 name</label>
           <input
@@ -90,7 +196,6 @@ export function SettingsPage() {
             onChange={e => updateSettings({ person2Name: e.target.value })}
           />
         </div>
-
         <div>
           <label className={labelCls}>Currency</label>
           <select
@@ -104,18 +209,20 @@ export function SettingsPage() {
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <h2 className="text-sm font-medium text-slate-400">Data</h2>
+        <h2 className="text-sm font-medium text-slate-400">Sync</h2>
+        <GistSetup />
+      </div>
 
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 className="text-sm font-medium text-slate-400">Data</h2>
         <button
           onClick={handleExport}
           className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium"
         >Export data (JSON)</button>
-
         <label className="block w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium text-center cursor-pointer">
           Import data (JSON)
           <input type="file" accept=".json" className="hidden" onChange={handleImport} />
         </label>
-
         <button
           onClick={() => setConfirmReset(true)}
           className="w-full py-2.5 rounded-lg bg-red-950 hover:bg-red-900 text-red-400 text-sm font-medium border border-red-900"
@@ -132,7 +239,7 @@ export function SettingsPage() {
       </div>
 
       <div className="text-center text-slate-600 text-xs">
-        All data is stored locally on this device. Nothing is sent to any server.
+        Financial data is stored in your private GitHub Gist. Nothing is shared with third parties.
       </div>
 
       {confirmReset && (
