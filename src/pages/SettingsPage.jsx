@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
-import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { syncConfigured } from '../hooks/useSync.js'
 import { THEMES, applyTheme, applyMode } from '../utils/themeUtils.js'
 
@@ -15,10 +14,7 @@ const CURRENCIES = [
 export function SettingsPage() {
   const { settings, updateSettings, syncStatus } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
-  const [, setUnlocked] = useLocalStorage('hf_unlocked', false)
-
   const handleLock = () => {
-    setUnlocked(false)
     window.location.reload()
   }
 

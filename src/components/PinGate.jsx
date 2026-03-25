@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLocalStorage } from '../hooks/useLocalStorage.js'
 
 const CORRECT_PIN = import.meta.env.VITE_PIN || '1234'
-const SESSION_KEY = 'hf_unlocked'
 
 export function PinGate({ children }) {
-  const [unlocked, setUnlocked] = useLocalStorage(SESSION_KEY, false)
+  const [unlocked, setUnlocked] = useState(false)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
