@@ -1,13 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const CORRECT_PIN = import.meta.env.VITE_PIN || '1234'
+const EXPIRY_KEY = 'hf_lock_expiry'
+const SESSION_MS = 30 * 60 * 1000 // 30 minutes
+
+function getExpiry() { return parseInt(localStorage.getItem(EXPIRY_KEY) || '0') }
+function saveExpiry() { localStorage.setItem(EXPIRY_KEY, String(Date.now() + SESSION_MS)) }
+function clearExpiry() { localStorage.removeItem(EXPIRY_KEY) }
 
 export function PinGate({ children }) {
-  const [unlocked, setUnlocked] = useState(false)
+  const [unlocked, setUnlocked] = useState(() => Date.now() < getExpiry())
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
+  const timerRef = useRef(null)
+
+  // Auto-lock when the 30-minute window expires while the app is open
+  useEffect(() => {
+    if (!unlocked) return
+    const remaining = getExpiry() - Date.now()
+    timerRef.current = setTimeout(() => {
+      clearExpiry()
+      setUnlocked(false)
+    }, remaining)
+    return () => clearTimeout(timerRef.current)
+  }, [unlocked])
 
   if (unlocked) return children
 
@@ -19,6 +37,7 @@ export function PinGate({ children }) {
 
     if (next.length === 4) {
       if (next === CORRECT_PIN) {
+        saveExpiry()
         setUnlocked(true)
       } else {
         setShakeKey(k => k + 1)
