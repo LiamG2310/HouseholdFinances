@@ -17,6 +17,8 @@ export function GistSync({ children }) {
         if (data.payments !== undefined) localStorage.setItem('hf_payments', JSON.stringify(data.payments))
         if (data.settings && Object.keys(data.settings).length)
                                          localStorage.setItem('hf_settings', JSON.stringify(data.settings))
+        if (data.profileImage)           localStorage.setItem('hf_profile_image', data.profileImage)
+        else                             localStorage.removeItem('hf_profile_image')
       })
       .catch(e => setError(e.message))
       .finally(() => setReady(true))

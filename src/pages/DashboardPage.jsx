@@ -14,9 +14,8 @@ const stagger = {
 }
 
 export function DashboardPage() {
-  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
+  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage } = useFinance()
   const [annual, setAnnual] = useState(false)
-  const profileImage = localStorage.getItem('hf_profile_image') || null
 
   const now = new Date()
   const year = now.getFullYear()

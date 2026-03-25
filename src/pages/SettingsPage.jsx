@@ -12,9 +12,8 @@ const CURRENCIES = [
 ]
 
 export function SettingsPage() {
-  const { settings, updateSettings, syncStatus } = useFinance()
+  const { settings, updateSettings, syncStatus, profileImage, updateProfileImage } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
-  const [profileImage, setProfileImage] = useState(() => localStorage.getItem('hf_profile_image') || null)
   const handleLock = () => {
     window.location.reload()
   }
@@ -187,9 +186,7 @@ export function SettingsPage() {
                     const w = img.width * scale, h = img.height * scale
                     ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
                     URL.revokeObjectURL(url)
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
-                    localStorage.setItem('hf_profile_image', dataUrl)
-                    setProfileImage(dataUrl)
+                    updateProfileImage(canvas.toDataURL('image/jpeg', 0.8))
                   }
                   img.src = url
                 }}
@@ -197,7 +194,7 @@ export function SettingsPage() {
             </label>
             {profileImage && (
               <button
-                onClick={() => { localStorage.removeItem('hf_profile_image'); setProfileImage(null) }}
+                onClick={() => updateProfileImage(null)}
                 className="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-400 text-sm font-medium"
               >Remove</button>
             )}

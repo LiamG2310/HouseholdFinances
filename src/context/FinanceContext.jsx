@@ -12,8 +12,18 @@ export function FinanceProvider({ children }) {
   const incomeApi = useIncome()
   const settingsApi = useSettings()
   const [syncStatus, setSyncStatus] = useState('idle') // idle | saving | saved | error
+  const [profileImage, setProfileImage] = useState(() => localStorage.getItem('hf_profile_image') || null)
   const hasMounted = useRef(false)
   const saveTimer = useRef(null)
+
+  const updateProfileImage = (dataUrl) => {
+    if (dataUrl) {
+      localStorage.setItem('hf_profile_image', dataUrl)
+    } else {
+      localStorage.removeItem('hf_profile_image')
+    }
+    setProfileImage(dataUrl || null)
+  }
 
   useEffect(() => {
     // Skip the initial mount — only save on subsequent changes
@@ -31,6 +41,7 @@ export function FinanceProvider({ children }) {
         bills: billsApi.bills,
         income: incomeApi.incomes,
         payments: billsApi.payments,
+        profileImage: localStorage.getItem('hf_profile_image') || null,
       })
         .then(() => {
           setSyncStatus('saved')
@@ -38,12 +49,12 @@ export function FinanceProvider({ children }) {
         })
         .catch(() => setSyncStatus('error'))
     }, 1500)
-  }, [billsApi.bills, billsApi.payments, incomeApi.incomes, settingsApi.settings])
+  }, [billsApi.bills, billsApi.payments, incomeApi.incomes, settingsApi.settings, profileImage])
 
   const fmt = (amount) => formatCurrency(amount, settingsApi.settings.currency)
 
   return (
-    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus }}>
+    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage }}>
       {children}
     </FinanceContext.Provider>
   )
