@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useGist } from '../hooks/useGist.js'
+import { loadData, syncConfigured } from '../hooks/useSync.js'
 
-// Loads latest data from Gist into localStorage before the app renders.
-// If no PAT/Gist is configured, renders children immediately.
+// Loads latest data from JSONBin into localStorage before the app renders.
+// If sync is not configured (local dev), renders children immediately.
 export function GistSync({ children }) {
-  const { pat, gistId, loadGist } = useGist()
-  const [ready, setReady] = useState(!pat || !gistId)
+  const [ready, setReady] = useState(!syncConfigured)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!pat || !gistId) return
-    loadGist()
+    if (!syncConfigured) return
+    loadData()
       .then(data => {
         if (!data) return
         if (data.bills !== undefined)    localStorage.setItem('hf_bills',    JSON.stringify(data.bills))

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useBills } from '../hooks/useBills.js'
 import { useIncome } from '../hooks/useIncome.js'
 import { useSettings } from '../hooks/useSettings.js'
-import { useGist } from '../hooks/useGist.js'
+import { saveData, syncConfigured } from '../hooks/useSync.js'
 import { formatCurrency } from '../utils/currencyUtils.js'
 
 const FinanceContext = createContext(null)
@@ -11,7 +11,6 @@ export function FinanceProvider({ children }) {
   const billsApi = useBills()
   const incomeApi = useIncome()
   const settingsApi = useSettings()
-  const { pat, gistId, saveGist } = useGist()
   const [syncStatus, setSyncStatus] = useState('idle') // idle | saving | saved | error
   const hasMounted = useRef(false)
   const saveTimer = useRef(null)
@@ -22,12 +21,12 @@ export function FinanceProvider({ children }) {
       hasMounted.current = true
       return
     }
-    if (!pat || !gistId) return
+    if (!syncConfigured) return
 
     setSyncStatus('saving')
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      saveGist({
+      saveData({
         settings: settingsApi.settings,
         bills: billsApi.bills,
         income: incomeApi.incomes,

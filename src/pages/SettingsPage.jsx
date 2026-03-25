@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
-import { useGist } from '../hooks/useGist.js'
+import { syncConfigured } from '../hooks/useSync.js'
 
 const CURRENCIES = [
   { value: 'GBP', label: '£ GBP — British Pound' },
@@ -11,86 +11,8 @@ const CURRENCIES = [
   { value: 'AUD', label: 'A$ AUD — Australian Dollar' },
 ]
 
-function GistSetup() {
-  const { pat, setPat, gistId, loadGist } = useGist()
-  const [inputPat, setInputPat] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [isError, setIsError] = useState(false)
-
-  const showMsg = (text, error = false) => {
-    setMsg(text); setIsError(error)
-    if (!error) setTimeout(() => setMsg(''), 3000)
-  }
-
-  const handleConnect = async () => {
-    if (!inputPat.trim()) return showMsg('Enter your GitHub PAT', true)
-    setLoading(true)
-    try {
-      await loadGist(inputPat.trim(), gistId)
-      setPat(inputPat.trim())
-      setInputPat('')
-      showMsg('Connected!')
-    } catch (e) {
-      showMsg(e.message, true)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDisconnect = () => {
-    setPat('')
-    setMsg('')
-  }
-
-  const inputCls = 'w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 text-sm'
-  const labelCls = 'block text-xs text-slate-400 mb-1'
-
-  if (pat && gistId) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-400" />
-          <span className="text-sm text-green-400">Syncing with GitHub Gist</span>
-        </div>
-        {msg && <p className="text-xs text-green-400">{msg}</p>}
-        <button
-          onClick={handleDisconnect}
-          className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium"
-        >Disconnect</button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-slate-500">
-        Enter your GitHub Personal Access Token to sync data across devices. Generate one at{' '}
-        <span className="text-indigo-400">github.com → Settings → Developer settings → Personal access tokens</span>
-        {' '}with <span className="text-white">gist</span> scope only.
-      </p>
-      <div>
-        <label className={labelCls}>GitHub Personal Access Token</label>
-        <input
-          className={inputCls}
-          type="password"
-          value={inputPat}
-          onChange={e => setInputPat(e.target.value)}
-          placeholder="ghp_..."
-        />
-      </div>
-      {msg && <p className={`text-xs ${isError ? 'text-red-400' : 'text-green-400'}`}>{msg}</p>}
-      <button
-        onClick={handleConnect}
-        disabled={loading}
-        className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium"
-      >{loading ? 'Connecting...' : 'Connect'}</button>
-    </div>
-  )
-}
-
 export function SettingsPage() {
-  const { settings, updateSettings } = useFinance()
+  const { settings, updateSettings, syncStatus } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
   const [, setUnlocked] = useLocalStorage('hf_unlocked', false)
 
@@ -178,9 +100,18 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <h2 className="text-sm font-medium text-slate-400">Sync</h2>
-        <GistSetup />
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+        <h2 className="text-sm font-medium text-slate-400 mb-3">Sync</h2>
+        {syncConfigured ? (
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${syncStatus === 'error' ? 'bg-red-400' : 'bg-green-400'}`} />
+            <span className={`text-sm ${syncStatus === 'error' ? 'text-red-400' : 'text-green-400'}`}>
+              {syncStatus === 'saving' ? 'Saving...' : syncStatus === 'error' ? 'Sync error' : 'Syncing across devices'}
+            </span>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">Sync not configured — data is stored locally only.</p>
+        )}
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
@@ -209,7 +140,7 @@ export function SettingsPage() {
       </div>
 
       <div className="text-center text-slate-600 text-xs">
-        Financial data is stored in your private GitHub Gist. Nothing is shared with third parties.
+        Data is synced via JSONBin. Nothing is shared with third parties.
       </div>
 
       {confirmReset && (

@@ -33,7 +33,8 @@ jobs:
       - run: npm run build
         env:
           VITE_PIN: ${{ secrets.VITE_PIN }}
-          VITE_GIST_ID: ${{ secrets.VITE_GIST_ID }}
+          VITE_JSONBIN_BIN_ID: ${{ secrets.VITE_JSONBIN_BIN_ID }}
+          VITE_JSONBIN_KEY: ${{ secrets.VITE_JSONBIN_KEY }}
 
       - uses: actions/configure-pages@v4
         with:
