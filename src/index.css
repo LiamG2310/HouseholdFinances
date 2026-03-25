@@ -127,6 +127,11 @@
   --color-amber-950: #fffbeb;
   --color-amber-800: #fde68a;
 
+  /* Hero gradient tops: dark → light tints so dark text stays readable */
+  --color-indigo-950: #e0f2fe;
+  --color-red-950:    #fff1f2;
+  --color-amber-950:  #fffbeb;
+
   /* Body text override */
   color: #0f172a;
 }
