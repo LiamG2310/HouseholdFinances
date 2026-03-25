@@ -7,7 +7,8 @@
   }
   body {
     margin: 0;
-    background: #0f172a;
+    /* Use CSS variable so themes can override the body background */
+    background: var(--color-slate-900);
     color: #f1f5f9;
     font-family: system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -17,4 +18,84 @@
     display: flex;
     flex-direction: column;
   }
+}
+
+/* ── Theme overrides ──────────────────────────────────────────────────────────
+   Each [data-theme] block overrides Tailwind v4's CSS custom properties.
+   These rules are NOT in any @layer, so they win over @layer theme.
+   Affects: accent colour (indigo-*) + surface colour (slate-*)
+──────────────────────────────────────────────────────────────────────────────*/
+
+/* Ocean — cyan accent, deep navy surfaces */
+[data-theme="ocean"] {
+  --color-indigo-400: #22d3ee;
+  --color-indigo-500: #06b6d4;
+  --color-indigo-600: #0891b2;
+  --color-indigo-950: #083344;
+  --color-slate-700: #163448;
+  --color-slate-800: #0f2236;
+  --color-slate-900: #0a1829;
+}
+
+/* Forest — emerald accent, dark green-tinted surfaces */
+[data-theme="forest"] {
+  --color-indigo-400: #34d399;
+  --color-indigo-500: #10b981;
+  --color-indigo-600: #059669;
+  --color-indigo-950: #022c22;
+  --color-slate-700: #1e3322;
+  --color-slate-800: #142418;
+  --color-slate-900: #0a180d;
+}
+
+/* Violet — purple accent, deep violet-tinted surfaces */
+[data-theme="violet"] {
+  --color-indigo-400: #a78bfa;
+  --color-indigo-500: #8b5cf6;
+  --color-indigo-600: #7c3aed;
+  --color-indigo-950: #2e1065;
+  --color-slate-700: #26183a;
+  --color-slate-800: #1a1028;
+  --color-slate-900: #10081a;
+}
+
+/* Rose — pink accent, dark rose-tinted surfaces */
+[data-theme="rose"] {
+  --color-indigo-400: #fb7185;
+  --color-indigo-500: #f43f5e;
+  --color-indigo-600: #e11d48;
+  --color-indigo-950: #4c0519;
+  --color-slate-700: #331418;
+  --color-slate-800: #220d10;
+  --color-slate-900: #14080a;
+}
+
+/* Sunset — orange accent, dark warm ember surfaces */
+[data-theme="sunset"] {
+  --color-indigo-400: #fb923c;
+  --color-indigo-500: #f97316;
+  --color-indigo-600: #ea580c;
+  --color-indigo-950: #431407;
+  --color-slate-700: #2e1e0a;
+  --color-slate-800: #1e1408;
+  --color-slate-900: #120d04;
+}
+
+/* Gold — amber accent, neutral zinc surfaces */
+[data-theme="gold"] {
+  --color-indigo-400: #fbbf24;
+  --color-indigo-500: #f59e0b;
+  --color-indigo-600: #d97706;
+  --color-indigo-950: #431a02;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #27272a;
+  --color-slate-900: #18181b;
+}
+
+/* Sky — bright blue accent, cool slate surfaces (same base as default) */
+[data-theme="sky"] {
+  --color-indigo-400: #38bdf8;
+  --color-indigo-500: #0ea5e9;
+  --color-indigo-600: #0284c7;
+  --color-indigo-950: #082f49;
 }
