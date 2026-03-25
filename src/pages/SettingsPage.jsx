@@ -3,6 +3,7 @@ import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { syncConfigured } from '../hooks/useSync.js'
+import { THEMES, applyTheme } from '../utils/themeUtils.js'
 
 const CURRENCIES = [
   { value: 'GBP', label: '£ GBP — British Pound' },
@@ -97,6 +98,36 @@ export function SettingsPage() {
           >
             {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
+        </div>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+        <h2 className="text-sm font-medium text-slate-400 mb-3">Appearance</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {THEMES.map(theme => {
+            const isActive = (settings.theme ?? 'sky') === theme.id
+            return (
+              <button
+                key={theme.id}
+                onClick={() => {
+                  updateSettings({ theme: theme.id })
+                  applyTheme(theme.id)
+                }}
+                className={`flex items-center gap-2.5 p-3 rounded-xl border transition-colors ${
+                  isActive ? 'border-indigo-500 bg-slate-700' : 'border-slate-700 hover:border-slate-500'
+                }`}
+              >
+                <div className="flex gap-1 flex-shrink-0">
+                  {theme.preview.map((hex, i) => (
+                    <div key={i} className="w-4 h-4 rounded-full" style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+                <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-slate-400'}`}>
+                  {theme.name}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 

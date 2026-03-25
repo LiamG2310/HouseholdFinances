@@ -8,9 +8,7 @@ import { DashboardPage } from './pages/DashboardPage.jsx'
 import { BillsPage } from './pages/BillsPage.jsx'
 import { IncomePage } from './pages/IncomePage.jsx'
 import { SettingsPage } from './pages/SettingsPage.jsx'
-import { ThemePage } from './pages/ThemePage.jsx'
-
-const TABS = ['dashboard', 'bills', 'income', 'settings', 'theme']
+const TABS = ['dashboard', 'bills', 'income', 'settings']
 
 const pageVariants = {
   enter: (dir) => ({ x: dir > 0 ? 40 : -40, opacity: 0 }),
@@ -29,7 +27,7 @@ function App() {
     setPage(next)
   }
 
-  const pages = { dashboard: DashboardPage, bills: BillsPage, income: IncomePage, settings: SettingsPage, theme: ThemePage }
+  const pages = { dashboard: DashboardPage, bills: BillsPage, income: IncomePage, settings: SettingsPage }
   const PageComponent = pages[page]
 
   return (
