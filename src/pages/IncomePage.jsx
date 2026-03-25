@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { IncomeForm } from '../components/income/IncomeForm.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
@@ -119,14 +120,16 @@ export function IncomePage() {
         )}
       </div>
 
-      {showForm && (
-        <IncomeForm
-          income={editIncome}
-          onSave={handleSave}
-          onClose={() => { setShowForm(false); setEditIncome(null) }}
-          settings={settings}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <IncomeForm
+            income={editIncome}
+            onSave={handleSave}
+            onClose={() => { setShowForm(false); setEditIncome(null) }}
+            settings={settings}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

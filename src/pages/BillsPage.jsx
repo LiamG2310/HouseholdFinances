@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { BillCard } from '../components/bills/BillCard.jsx'
 import { BillForm } from '../components/bills/BillForm.jsx'
@@ -100,14 +101,16 @@ export function BillsPage() {
         )}
       </div>
 
-      {showForm && (
-        <BillForm
-          bill={editBill}
-          onSave={handleSave}
-          onClose={() => { setShowForm(false); setEditBill(null) }}
-          settings={settings}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <BillForm
+            bill={editBill}
+            onSave={handleSave}
+            onClose={() => { setShowForm(false); setEditBill(null) }}
+            settings={settings}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
