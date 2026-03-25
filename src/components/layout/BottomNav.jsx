@@ -6,6 +6,7 @@ const TABS = [
   { id: 'bills',     label: 'Bills',    icon: '📋' },
   { id: 'income',    label: 'Income',   icon: '💰' },
   { id: 'settings',  label: 'Settings', icon: '⚙️' },
+  { id: 'theme',     label: 'Theme',    icon: '🎨' },
 ]
 
 function SyncDot({ status }) {
