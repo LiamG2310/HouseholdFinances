@@ -3,9 +3,15 @@ import { useLocalStorage } from './useLocalStorage.js'
 const FILENAME = 'household-finances.json'
 const API = 'https://api.github.com'
 
+// Gist ID baked in at build time via GitHub secret — falls back to localStorage for local dev
+const BUILT_IN_GIST_ID = import.meta.env.VITE_GIST_ID || ''
+
 export function useGist() {
   const [pat, setPat] = useLocalStorage('hf_pat', '')
-  const [gistId, setGistId] = useLocalStorage('hf_gist_id', '')
+  const [storedGistId, setStoredGistId] = useLocalStorage('hf_gist_id', '')
+
+  // Prefer the build-time Gist ID; fall back to anything stored locally
+  const gistId = BUILT_IN_GIST_ID || storedGistId
 
   const headers = (token = pat) => ({
     'Authorization': `Bearer ${token}`,
@@ -13,29 +19,10 @@ export function useGist() {
     'Content-Type': 'application/json',
   })
 
-  const createGist = async (token = pat) => {
-    const res = await fetch(`${API}/gists`, {
-      method: 'POST',
-      headers: headers(token),
-      body: JSON.stringify({
-        description: 'HomeFinances data',
-        public: false,
-        files: {
-          [FILENAME]: {
-            content: JSON.stringify({ settings: {}, bills: [], income: [], payments: [] }, null, 2)
-          }
-        }
-      })
-    })
-    if (!res.ok) throw new Error('Failed to create Gist — check your PAT has gist scope')
-    const data = await res.json()
-    return data.id
-  }
-
   const loadGist = async (token = pat, id = gistId) => {
     if (!token || !id) return null
     const res = await fetch(`${API}/gists/${id}`, { headers: headers(token) })
-    if (!res.ok) throw new Error('Failed to load Gist')
+    if (!res.ok) throw new Error('Failed to load Gist — check your PAT is correct')
     const data = await res.json()
     const file = data.files[FILENAME]
     if (!file) throw new Error('Gist file not found')
@@ -54,5 +41,5 @@ export function useGist() {
     if (!res.ok) throw new Error('Failed to save to Gist')
   }
 
-  return { pat, setPat, gistId, setGistId, createGist, loadGist, saveGist }
+  return { pat, setPat, gistId, setStoredGistId, loadGist, saveGist }
 }

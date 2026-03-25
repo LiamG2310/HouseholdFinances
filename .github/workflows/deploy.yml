@@ -33,6 +33,7 @@ jobs:
       - run: npm run build
         env:
           VITE_PIN: ${{ secrets.VITE_PIN }}
+          VITE_GIST_ID: ${{ secrets.VITE_GIST_ID }}
 
       - uses: actions/configure-pages@v4
         with:

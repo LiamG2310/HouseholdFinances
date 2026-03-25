@@ -12,9 +12,8 @@ const CURRENCIES = [
 ]
 
 function GistSetup() {
-  const { pat, setPat, gistId, setGistId, createGist, loadGist } = useGist()
+  const { pat, setPat, gistId, loadGist } = useGist()
   const [inputPat, setInputPat] = useState('')
-  const [inputGistId, setInputGistId] = useState('')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [isError, setIsError] = useState(false)
@@ -28,19 +27,10 @@ function GistSetup() {
     if (!inputPat.trim()) return showMsg('Enter your GitHub PAT', true)
     setLoading(true)
     try {
-      let id = inputGistId.trim()
-      if (!id) {
-        id = await createGist(inputPat.trim())
-        showMsg('Gist created!')
-      } else {
-        // Validate the Gist is accessible
-        await loadGist(inputPat.trim(), id)
-        showMsg('Connected!')
-      }
+      await loadGist(inputPat.trim(), gistId)
       setPat(inputPat.trim())
-      setGistId(id)
       setInputPat('')
-      setInputGistId('')
+      showMsg('Connected!')
     } catch (e) {
       showMsg(e.message, true)
     } finally {
@@ -50,7 +40,6 @@ function GistSetup() {
 
   const handleDisconnect = () => {
     setPat('')
-    setGistId('')
     setMsg('')
   }
 
@@ -64,21 +53,11 @@ function GistSetup() {
           <span className="w-2 h-2 rounded-full bg-green-400" />
           <span className="text-sm text-green-400">Syncing with GitHub Gist</span>
         </div>
-        <div>
-          <label className={labelCls}>Gist ID (use this on your other device)</label>
-          <div className="flex gap-2">
-            <input className={inputCls} value={gistId} readOnly />
-            <button
-              onClick={() => { navigator.clipboard.writeText(gistId); showMsg('Copied!') }}
-              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm"
-            >Copy</button>
-          </div>
-        </div>
         {msg && <p className="text-xs text-green-400">{msg}</p>}
         <button
           onClick={handleDisconnect}
           className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium"
-        >Disconnect Gist</button>
+        >Disconnect</button>
       </div>
     )
   }
@@ -86,7 +65,7 @@ function GistSetup() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-500">
-        Connect a private GitHub Gist to sync data across devices. Generate a token at{' '}
+        Enter your GitHub Personal Access Token to sync data across devices. Generate one at{' '}
         <span className="text-indigo-400">github.com → Settings → Developer settings → Personal access tokens</span>
         {' '}with <span className="text-white">gist</span> scope only.
       </p>
@@ -98,15 +77,6 @@ function GistSetup() {
           value={inputPat}
           onChange={e => setInputPat(e.target.value)}
           placeholder="ghp_..."
-        />
-      </div>
-      <div>
-        <label className={labelCls}>Gist ID (leave blank to create a new one)</label>
-        <input
-          className={inputCls}
-          value={inputGistId}
-          onChange={e => setInputGistId(e.target.value)}
-          placeholder="e.g. abc123def456..."
         />
       </div>
       {msg && <p className={`text-xs ${isError ? 'text-red-400' : 'text-green-400'}`}>{msg}</p>}
