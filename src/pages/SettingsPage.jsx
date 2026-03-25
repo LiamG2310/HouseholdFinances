@@ -14,6 +14,7 @@ const CURRENCIES = [
 export function SettingsPage() {
   const { settings, updateSettings, syncStatus } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
+  const [profileImage, setProfileImage] = useState(() => localStorage.getItem('hf_profile_image') || null)
   const handleLock = () => {
     window.location.reload()
   }
@@ -157,9 +158,9 @@ export function SettingsPage() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
         <h2 className="text-sm font-medium text-slate-400">Profile picture</h2>
         <div className="flex items-center gap-4">
-          {settings.profileImage ? (
+          {profileImage ? (
             <div className="relative flex-shrink-0" style={{ width: '4rem', height: '4rem' }}>
-              <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+              <img src={profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
               <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 14px 8px rgba(0,0,0,0.45)' }} />
             </div>
           ) : (
@@ -167,7 +168,7 @@ export function SettingsPage() {
           )}
           <div className="flex flex-col gap-2 flex-1">
             <label className="block w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium text-center cursor-pointer">
-              {settings.profileImage ? 'Change picture' : 'Upload picture'}
+              {profileImage ? 'Change picture' : 'Upload picture'}
               <input
                 type="file"
                 accept="image/*"
@@ -186,15 +187,17 @@ export function SettingsPage() {
                     const w = img.width * scale, h = img.height * scale
                     ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
                     URL.revokeObjectURL(url)
-                    updateSettings({ profileImage: canvas.toDataURL('image/jpeg', 0.8) })
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+                    localStorage.setItem('hf_profile_image', dataUrl)
+                    setProfileImage(dataUrl)
                   }
                   img.src = url
                 }}
               />
             </label>
-            {settings.profileImage && (
+            {profileImage && (
               <button
-                onClick={() => updateSettings({ profileImage: null })}
+                onClick={() => { localStorage.removeItem('hf_profile_image'); setProfileImage(null) }}
                 className="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-400 text-sm font-medium"
               >Remove</button>
             )}

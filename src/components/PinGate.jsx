@@ -6,10 +6,7 @@ const EXPIRY_KEY = 'hf_lock_expiry'
 const SESSION_MS = 30 * 60 * 1000 // 30 minutes
 
 function getProfileImage() {
-  try {
-    const s = JSON.parse(localStorage.getItem('hf_settings') || '{}')
-    return s.profileImage ?? null
-  } catch { return null }
+  return localStorage.getItem('hf_profile_image') || null
 }
 
 function getExpiry() { return parseInt(localStorage.getItem(EXPIRY_KEY) || '0') }
@@ -22,7 +19,7 @@ export function PinGate({ children }) {
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
   const timerRef = useRef(null)
-  const [profileImage] = useState(() => getProfileImage())
+  const profileImage = getProfileImage()
 
   // Auto-lock when the 30-minute window expires while the app is open
   useEffect(() => {

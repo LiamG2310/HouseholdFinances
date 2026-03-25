@@ -8,7 +8,6 @@ const DEFAULTS = {
   currency: 'GBP',
   theme: 'sky',
   mode: 'dark',
-  profileImage: null,
 }
 
 export function useSettings() {

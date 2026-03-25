@@ -16,6 +16,7 @@ const stagger = {
 export function DashboardPage() {
   const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
   const [annual, setAnnual] = useState(false)
+  const profileImage = localStorage.getItem('hf_profile_image') || null
 
   const now = new Date()
   const year = now.getFullYear()
@@ -73,9 +74,9 @@ export function DashboardPage() {
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              {settings.profileImage && (
+              {profileImage && (
                 <div className="relative flex-shrink-0" style={{ width: '2.5rem', height: '2.5rem' }}>
-                  <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+                  <img src={profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
                   <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 8px 4px rgba(0,0,0,0.4)' }} />
                 </div>
               )}
@@ -282,9 +283,9 @@ export function DashboardPage() {
         {/* Empty state */}
         {monthBills.length === 0 && monthlyTotal === 0 && (
           <div className="text-center py-16">
-            {settings.profileImage ? (
+            {profileImage ? (
               <div className="relative mx-auto mb-3" style={{ width: '5rem', height: '5rem' }}>
-                <img src={settings.profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
+                <img src={profileImage} alt="" className="w-full h-full object-cover rounded-full block" />
                 <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 18px 10px rgba(0,0,0,0.45)' }} />
               </div>
             ) : (
