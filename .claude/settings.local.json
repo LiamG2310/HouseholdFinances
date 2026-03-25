@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")"
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(gh run:*)"
     ]
   }
 }

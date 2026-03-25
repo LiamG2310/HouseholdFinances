@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { categoryIcon } from '../../utils/billUtils.js'
 import { formatShortDate, daysUntil } from '../../utils/dateUtils.js'
 import { ConfirmDialog } from '../shared/ConfirmDialog.jsx'
@@ -23,15 +24,31 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
 
   return (
     <>
-      <div className={`flex items-center gap-3 p-3 rounded-xl border ${paid ? 'border-slate-700 opacity-60' : 'border-slate-700 bg-slate-800'}`}>
-        {/* Paid toggle */}
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: paid ? 0.6 : 1, y: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className={`flex items-center gap-3 p-3 rounded-xl border border-slate-700 ${paid ? '' : 'bg-slate-800'}`}
+      >
         {onTogglePaid && (
-          <button
+          <motion.button
             onClick={onTogglePaid}
+            whileTap={{ scale: 0.8 }}
             className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${paid ? 'border-green-500 bg-green-500' : 'border-slate-500'}`}
           >
-            {paid && <span className="text-white text-xs">✓</span>}
-          </button>
+            <AnimatePresence>
+              {paid && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="text-white text-xs"
+                >✓</motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         )}
 
         <span className="text-2xl">{categoryIcon(bill.category)}</span>
@@ -53,10 +70,10 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
         </div>
 
         <div className="flex flex-col gap-1">
-          <button onClick={() => onEdit(bill)} className="text-slate-500 hover:text-white text-sm px-1">✏️</button>
-          <button onClick={() => setConfirmDelete(true)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => onEdit(bill)} className="text-slate-500 hover:text-white text-sm px-1">✏️</motion.button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => setConfirmDelete(true)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {confirmDelete && (
         <ConfirmDialog

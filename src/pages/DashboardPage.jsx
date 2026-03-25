@@ -1,7 +1,17 @@
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
 import { categoryIcon, CATEGORIES } from '../utils/billUtils.js'
+
+const card = {
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 24 } },
+}
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+}
 
 export function DashboardPage() {
   const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
@@ -91,10 +101,15 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 space-y-4 mt-4">
+      <motion.div
+        className="max-w-lg mx-auto px-4 space-y-4 mt-4"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
 
         {/* Quick stats row */}
-        <div className="grid grid-cols-3 gap-3">
+        <motion.div variants={card} className="grid grid-cols-3 gap-3">
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
             <p className="text-2xl font-bold text-white">{paidBills.length}</p>
             <p className="text-xs text-slate-400 mt-0.5">Paid</p>
@@ -107,11 +122,11 @@ export function DashboardPage() {
             <p className="text-2xl font-bold text-red-400">{overdue.length}</p>
             <p className="text-xs text-slate-400 mt-0.5">Overdue</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Bills paid progress */}
         {monthBills.length > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+          <motion.div variants={card} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-slate-300 font-medium">Bills paid this month</span>
               <span className="text-sm text-white font-semibold">{fmt(paidTotal)} <span className="text-slate-500 font-normal">of {fmt(totalBills)}</span></span>
@@ -126,12 +141,12 @@ export function DashboardPage() {
               <span>{Math.round(paidPct)}% complete</span>
               <span>{fmt(remainingBills)} still to pay</span>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Per-person income */}
         {monthlyTotal > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+          <motion.div variants={card} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <h2 className="text-sm font-medium text-slate-400 mb-3">Household Income</h2>
             <div className="space-y-2">
               {[
@@ -154,7 +169,7 @@ export function DashboardPage() {
                 <span className="text-green-400 font-semibold">{fmt(monthlyTotal)}</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Overdue */}
@@ -210,7 +225,7 @@ export function DashboardPage() {
 
         {/* Category breakdown */}
         {categoryTotals.length > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+          <motion.div variants={card} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <h2 className="text-sm font-medium text-slate-400 mb-3">Remaining by category</h2>
             <div className="space-y-2">
               {categoryTotals.map(cat => (
@@ -227,7 +242,7 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Empty state */}
@@ -238,7 +253,7 @@ export function DashboardPage() {
           </div>
         )}
 
-      </div>
+      </motion.div>
     </div>
   )
 }

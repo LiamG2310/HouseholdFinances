@@ -1,4 +1,5 @@
 import { useFinance } from '../../context/FinanceContext.jsx'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const TABS = [
   { id: 'dashboard', label: 'Overview', icon: '📊' },
@@ -27,16 +28,28 @@ export function BottomNav({ active, onSelect }) {
       <div className="flex max-w-lg mx-auto relative">
         <SyncDot status={syncStatus} />
         {TABS.map(tab => (
-          <button
+          <motion.button
             key={tab.id}
             onClick={() => onSelect(tab.id)}
-            className={`flex-1 flex flex-col items-center py-3 gap-0.5 transition-colors ${
+            whileTap={{ scale: 0.85 }}
+            className={`flex-1 flex flex-col items-center py-3 gap-0.5 transition-colors relative ${
               active === tab.id ? 'text-indigo-400' : 'text-slate-500'
             }`}
           >
-            <span className="text-xl">{tab.icon}</span>
+            {active === tab.id && (
+              <motion.span
+                layoutId="nav-indicator"
+                className="absolute top-0 left-2 right-2 h-0.5 bg-indigo-400 rounded-full"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+            <motion.span
+              className="text-xl"
+              animate={{ scale: active === tab.id ? 1.15 : 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            >{tab.icon}</motion.span>
             <span className="text-xs">{tab.label}</span>
-          </button>
+          </motion.button>
         ))}
       </div>
     </nav>
