@@ -1,151 +1,244 @@
 import { useMemo } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
-import { getBillsForMonth } from '../utils/billUtils.js'
-import { monthLabel, daysUntil } from '../utils/dateUtils.js'
-import { categoryIcon } from '../utils/billUtils.js'
-import { formatShortDate } from '../utils/dateUtils.js'
+import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
+import { categoryIcon, CATEGORIES } from '../utils/billUtils.js'
 
 export function DashboardPage() {
-  const { bills, monthlyTotal, getBillsMonth, isPaid, fmt, settings } = useFinance()
+  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
 
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1
   const mk = `${year}-${String(month).padStart(2, '0')}`
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const daysLeft = daysInMonth - now.getDate()
 
   const monthBills = useMemo(() => getBillsMonth(year, month), [getBillsMonth, year, month])
 
   const totalBills = monthBills.reduce((s, { bill }) => s + bill.amount, 0)
-  const paidTotal = monthBills
-    .filter(({ bill }) => isPaid(bill.id, mk))
-    .reduce((s, { bill }) => s + bill.amount, 0)
+  const paidBills = monthBills.filter(({ bill }) => isPaid(bill.id, mk))
+  const unpaidBills = monthBills.filter(({ bill }) => !isPaid(bill.id, mk))
+  const paidTotal = paidBills.reduce((s, { bill }) => s + bill.amount, 0)
   const remainingBills = totalBills - paidTotal
-
   const balance = monthlyTotal - totalBills
+  const leftover = monthlyTotal - totalBills
   const isShortfall = balance < 0
   const isWarning = !isShortfall && monthlyTotal > 0 && balance < monthlyTotal * 0.1
 
-  const upcoming = monthBills.filter(({ bill, dueDate }) => {
-    const days = daysUntil(dueDate)
-    return !isPaid(bill.id, mk) && days >= 0 && days <= 7
+  const overdue = unpaidBills.filter(({ dueDate }) => daysUntil(dueDate) < 0)
+  const upcoming = unpaidBills.filter(({ dueDate }) => {
+    const d = daysUntil(dueDate)
+    return d >= 0 && d <= 7
   })
 
-  const overdue = monthBills.filter(({ bill, dueDate }) => {
-    return !isPaid(bill.id, mk) && daysUntil(dueDate) < 0
-  })
+  // Category spending breakdown (unpaid only)
+  const categoryTotals = CATEGORIES.map(cat => ({
+    ...cat,
+    total: unpaidBills
+      .filter(({ bill }) => bill.category === cat.value)
+      .reduce((s, { bill }) => s + bill.amount, 0),
+  })).filter(c => c.total > 0)
+
+  const statusColor = isShortfall ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-green-400'
+  const statusBg = isShortfall ? 'from-red-950 to-slate-900' : isWarning ? 'from-amber-950 to-slate-900' : 'from-indigo-950 to-slate-900'
+  const paidPct = monthBills.length ? (paidBills.length / monthBills.length) * 100 : 0
 
   return (
-    <div className="flex-1 p-4 space-y-4 max-w-lg mx-auto w-full">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Overview</h1>
-        <span className="text-slate-400 text-sm">{monthLabel()}</span>
-      </div>
+    <div className="flex-1 overflow-y-auto pb-24">
 
-      {/* Alert banner */}
-      {(isShortfall || isWarning || overdue.length > 0) && (
-        <div className={`rounded-xl p-4 ${isShortfall ? 'bg-red-950 border border-red-800' : overdue.length > 0 ? 'bg-red-950 border border-red-800' : 'bg-amber-950 border border-amber-800'}`}>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">{isShortfall || overdue.length > 0 ? '⚠️' : '⚡'}</span>
+      {/* Hero card */}
+      <div className={`bg-gradient-to-b ${statusBg} px-4 pt-6 pb-8`}>
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              {isShortfall && (
-                <p className="text-red-300 font-semibold">Shortfall of {fmt(Math.abs(balance))} this month</p>
-              )}
-              {isWarning && !isShortfall && (
-                <p className="text-amber-300 font-semibold">Tight month — only {fmt(balance)} left after bills</p>
-              )}
-              {overdue.length > 0 && (
-                <p className="text-red-300 text-sm mt-1">{overdue.length} bill{overdue.length > 1 ? 's' : ''} overdue</p>
-              )}
+              <p className="text-slate-400 text-sm">{monthLabel()}</p>
+              <h1 className="text-white text-xl font-bold">Overview</h1>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-400 text-xs">{daysLeft} days left</p>
+              <p className="text-slate-300 text-sm">in month</p>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Month summary */}
-      <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-        <h2 className="text-sm font-medium text-slate-400 mb-3">This Month</h2>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-slate-300">Combined income</span>
-            <span className="text-green-400 font-semibold">{fmt(monthlyTotal)}</span>
+          {/* Balance */}
+          <div className="text-center py-4">
+            <p className="text-slate-400 text-sm mb-1">
+              {isShortfall ? 'Shortfall this month' : 'Left after bills'}
+            </p>
+            <p className={`text-5xl font-bold ${statusColor}`}>{fmt(Math.abs(leftover))}</p>
+            {isShortfall && <p className="text-red-400 text-sm mt-1">You're {fmt(Math.abs(balance))} short</p>}
+            {isWarning && <p className="text-amber-400 text-sm mt-1">Tight month — less than 10% buffer</p>}
           </div>
-          <div className="flex justify-between">
-            <span className="text-slate-300">Total bills</span>
-            <span className="text-white font-semibold">{fmt(totalBills)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-300">Still to pay</span>
-            <span className="text-amber-300 font-semibold">{fmt(remainingBills)}</span>
-          </div>
-          <div className="border-t border-slate-700 pt-2 flex justify-between">
-            <span className="text-slate-300 font-medium">Balance</span>
-            <span className={`font-bold text-lg ${isShortfall ? 'text-red-400' : 'text-green-400'}`}>
-              {fmt(balance)}
-            </span>
-          </div>
+
+          {/* Income vs Bills bar */}
+          {monthlyTotal > 0 && (
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-slate-400 mb-1">
+                <span>Bills {fmt(totalBills)}</span>
+                <span>Income {fmt(monthlyTotal)}</span>
+              </div>
+              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${isShortfall ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-indigo-500'}`}
+                  style={{ width: `${Math.min((totalBills / monthlyTotal) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-center text-xs text-slate-500 mt-1">
+                {monthlyTotal > 0 ? Math.round((totalBills / monthlyTotal) * 100) : 0}% of income goes to bills
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Progress bar */}
-      {monthBills.length > 0 && (
-        <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-400">Bills paid</span>
-            <span className="text-slate-300">{monthBills.filter(({ bill }) => isPaid(bill.id, mk)).length} / {monthBills.length}</span>
+      <div className="max-w-lg mx-auto px-4 space-y-4 mt-4">
+
+        {/* Quick stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-white">{paidBills.length}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Paid</p>
           </div>
-          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 rounded-full transition-all"
-              style={{ width: `${monthBills.length ? (monthBills.filter(({ bill }) => isPaid(bill.id, mk)).length / monthBills.length) * 100 : 0}%` }}
-            />
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-amber-400">{unpaidBills.length}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Remaining</p>
+          </div>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-red-400">{overdue.length}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Overdue</p>
           </div>
         </div>
-      )}
 
-      {/* Upcoming bills */}
-      {upcoming.length > 0 && (
-        <div>
-          <h2 className="text-sm font-medium text-slate-400 mb-2">Due within 7 days</h2>
-          <div className="space-y-2">
-            {upcoming.map(({ bill, dueDate }) => (
-              <div key={bill.id} className="flex items-center gap-3 bg-amber-950 border border-amber-900 rounded-xl p-3">
-                <span className="text-xl">{categoryIcon(bill.category)}</span>
-                <div className="flex-1">
-                  <div className="text-white font-medium">{bill.name}</div>
-                  <div className="text-amber-400 text-sm">{formatShortDate(dueDate)}</div>
+        {/* Bills paid progress */}
+        {monthBills.length > 0 && (
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-slate-300 font-medium">Bills paid this month</span>
+              <span className="text-sm text-white font-semibold">{fmt(paidTotal)} <span className="text-slate-500 font-normal">of {fmt(totalBills)}</span></span>
+            </div>
+            <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 rounded-full transition-all"
+                style={{ width: `${paidPct}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-slate-500 mt-1">
+              <span>{Math.round(paidPct)}% complete</span>
+              <span>{fmt(remainingBills)} still to pay</span>
+            </div>
+          </div>
+        )}
+
+        {/* Per-person income */}
+        {monthlyTotal > 0 && (
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+            <h2 className="text-sm font-medium text-slate-400 mb-3">Household Income</h2>
+            <div className="space-y-2">
+              {[
+                { name: settings.person1Name, amount: monthlyByPerson('person1') },
+                { name: settings.person2Name, amount: monthlyByPerson('person2') },
+              ].filter(p => p.amount > 0).map(p => (
+                <div key={p.name} className="flex items-center gap-3">
+                  <span className="text-slate-300 text-sm w-24 truncate">{p.name}</span>
+                  <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500 rounded-full"
+                      style={{ width: `${(p.amount / monthlyTotal) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-white text-sm font-medium w-20 text-right">{fmt(p.amount)}</span>
                 </div>
-                <span className="text-white font-semibold">{fmt(bill.amount)}</span>
+              ))}
+              <div className="border-t border-slate-700 pt-2 flex justify-between">
+                <span className="text-slate-400 text-sm">Combined</span>
+                <span className="text-green-400 font-semibold">{fmt(monthlyTotal)}</span>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Overdue */}
-      {overdue.length > 0 && (
-        <div>
-          <h2 className="text-sm font-medium text-red-400 mb-2">Overdue</h2>
-          <div className="space-y-2">
-            {overdue.map(({ bill, dueDate }) => (
-              <div key={bill.id} className="flex items-center gap-3 bg-red-950 border border-red-900 rounded-xl p-3">
-                <span className="text-xl">{categoryIcon(bill.category)}</span>
-                <div className="flex-1">
-                  <div className="text-white font-medium">{bill.name}</div>
-                  <div className="text-red-400 text-sm">{formatShortDate(dueDate)}</div>
+        {/* Overdue */}
+        {overdue.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-red-400 mb-2">⚠️ Overdue</h2>
+            <div className="space-y-2">
+              {overdue.map(({ bill, dueDate }) => (
+                <div key={bill.id} className="flex items-center gap-3 bg-red-950 border border-red-900 rounded-xl p-3">
+                  <button
+                    onClick={() => markPaid(bill.id, mk, 'joint', bill.amount)}
+                    className="w-6 h-6 rounded-full border-2 border-red-500 flex-shrink-0"
+                  />
+                  <span className="text-xl">{categoryIcon(bill.category)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium truncate">{bill.name}</p>
+                    <p className="text-red-400 text-xs">{formatShortDate(dueDate)}</p>
+                  </div>
+                  <span className="text-white font-semibold">{fmt(bill.amount)}</span>
                 </div>
-                <span className="text-white font-semibold">{fmt(bill.amount)}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {monthBills.length === 0 && monthlyTotal === 0 && (
-        <div className="text-center py-16">
-          <div className="text-5xl mb-3">🏠</div>
-          <p className="text-slate-400">Add your income and bills to get started</p>
-        </div>
-      )}
+        {/* Upcoming */}
+        {upcoming.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-slate-300 mb-2">Due this week</h2>
+            <div className="space-y-2">
+              {upcoming.map(({ bill, dueDate }) => {
+                const days = daysUntil(dueDate)
+                return (
+                  <div key={bill.id} className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <button
+                      onClick={() => markPaid(bill.id, mk, 'joint', bill.amount)}
+                      className="w-6 h-6 rounded-full border-2 border-slate-500 flex-shrink-0 hover:border-green-500 transition-colors"
+                    />
+                    <span className="text-xl">{categoryIcon(bill.category)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate">{bill.name}</p>
+                      <p className="text-slate-400 text-xs">
+                        {days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`} · {formatShortDate(dueDate)}
+                      </p>
+                    </div>
+                    <span className="text-white font-semibold">{fmt(bill.amount)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Category breakdown */}
+        {categoryTotals.length > 0 && (
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+            <h2 className="text-sm font-medium text-slate-400 mb-3">Remaining by category</h2>
+            <div className="space-y-2">
+              {categoryTotals.map(cat => (
+                <div key={cat.value} className="flex items-center gap-3">
+                  <span className="text-lg w-6">{cat.icon}</span>
+                  <span className="text-slate-300 text-sm flex-1">{cat.label}</span>
+                  <div className="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-400 rounded-full"
+                      style={{ width: `${remainingBills > 0 ? (cat.total / remainingBills) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-white text-sm font-medium w-16 text-right">{fmt(cat.total)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {monthBills.length === 0 && monthlyTotal === 0 && (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-3">🏠</div>
+            <p className="text-slate-400">Add your income and bills to get started</p>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }
