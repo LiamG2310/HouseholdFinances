@@ -3,7 +3,7 @@ import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { syncConfigured } from '../hooks/useSync.js'
-import { THEMES, applyTheme } from '../utils/themeUtils.js'
+import { THEMES, applyTheme, applyMode } from '../utils/themeUtils.js'
 
 const CURRENCIES = [
   { value: 'GBP', label: '£ GBP — British Pound' },
@@ -101,8 +101,21 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-        <h2 className="text-sm font-medium text-slate-400 mb-3">Appearance</h2>
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-slate-400">Appearance</h2>
+          <div className="flex bg-slate-700 rounded-lg p-0.5">
+            {['dark', 'light'].map(m => (
+              <button
+                key={m}
+                onClick={() => { updateSettings({ mode: m }); applyMode(m) }}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize ${
+                  (settings.mode ?? 'dark') === m ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >{m}</button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map(theme => {
             const isActive = (settings.theme ?? 'sky') === theme.id

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
-      "Bash(gh run:*)"
+      "Bash(gh run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(export 'PATH=/c/Program Files/nodejs:$PATH')",
+      "Bash(grep 'background:#' dist/assets/index-*.css)"
     ]
   }
 }

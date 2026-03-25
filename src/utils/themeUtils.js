@@ -28,3 +28,11 @@ export function applyTheme(themeId) {
     document.documentElement.setAttribute('data-theme', themeId)
   }
 }
+
+export function applyMode(mode) {
+  if (mode === 'light') {
+    document.documentElement.setAttribute('data-mode', 'light')
+  } else {
+    document.documentElement.removeAttribute('data-mode')
+  }
+}

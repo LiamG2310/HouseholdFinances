@@ -99,3 +99,34 @@
   --color-indigo-600: #0284c7;
   --color-indigo-950: #082f49;
 }
+
+/* ── Light mode ───────────────────────────────────────────────────────────────
+   Placed AFTER all theme blocks so same-specificity source order wins.
+   Theme accent colours (indigo-*) still apply in light mode.
+   Only slate surface colours + white are overridden here.
+──────────────────────────────────────────────────────────────────────────────*/
+[data-mode="light"] {
+  /* Invert primary text — text-white becomes near-black */
+  --color-white: #0f172a;
+
+  /* Surface colours: dark → light */
+  --color-slate-900: #f1f5f9;    /* page background */
+  --color-slate-800: #ffffff;    /* card + nav backgrounds */
+  --color-slate-700: #e2e8f0;    /* input backgrounds */
+  --color-slate-600: #cbd5e1;    /* input borders */
+  --color-slate-500: #64748b;    /* muted text */
+  --color-slate-400: #475569;    /* secondary text */
+  --color-slate-300: #334155;    /* slightly bright secondary */
+  --color-slate-200: #1e293b;
+
+  /* Status tint backgrounds: dark → pastel */
+  --color-green-950: #f0fdf4;
+  --color-green-900: #dcfce7;
+  --color-red-950:   #fff1f2;
+  --color-red-900:   #ffe4e6;
+  --color-amber-950: #fffbeb;
+  --color-amber-800: #fde68a;
+
+  /* Body text override */
+  color: #0f172a;
+}

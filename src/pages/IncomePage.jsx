@@ -1,55 +1,59 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { IncomeForm } from '../components/income/IncomeForm.jsx'
-import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { EmptyState } from '../components/shared/EmptyState.jsx'
+import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { toMonthly } from '../utils/billUtils.js'
 
 function IncomeCard({ income, onEdit, onDelete, fmt }) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const monthly = toMonthly(income.amount, income.frequency)
 
   return (
-    <>
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 border border-slate-700">
-        <div className="flex-1 min-w-0">
-          <div className="text-white font-medium">{income.label}</div>
-          <div className="text-slate-400 text-sm capitalize">{income.frequency}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-white font-semibold">{fmt(income.amount)}</div>
-          {income.frequency !== 'monthly' && (
-            <div className="text-slate-400 text-xs">{fmt(monthly)}/mo</div>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <button onClick={() => onEdit(income)} className="text-slate-500 hover:text-white text-sm px-1">✏️</button>
-          <button onClick={() => setConfirmDelete(true)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</button>
-        </div>
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 border border-slate-700">
+      <div className="flex-1 min-w-0">
+        <div className="text-white font-medium">{income.label}</div>
+        <div className="text-slate-400 text-sm capitalize">{income.frequency}</div>
       </div>
-      {confirmDelete && (
-        <ConfirmDialog
-          message={`Remove "${income.label}"?`}
-          onConfirm={() => { onDelete(income.id); setConfirmDelete(false) }}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
-    </>
+      <div className="text-right">
+        <div className="text-white font-semibold">{fmt(income.amount)}</div>
+        {income.frequency !== 'monthly' && (
+          <div className="text-slate-400 text-xs">{fmt(monthly)}/mo</div>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <button onClick={() => onEdit(income)} className="text-slate-500 hover:text-white text-sm px-1">✏️</button>
+        <button onClick={() => onDelete(income)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</button>
+      </div>
+    </div>
   )
 }
 
 export function IncomePage() {
-  const { incomes, addIncome, updateIncome, deleteIncome, monthlyTotal, monthlyByPerson, fmt, settings } = useFinance()
+  const { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson, fmt, settings } = useFinance()
   const [showForm, setShowForm] = useState(false)
   const [editIncome, setEditIncome] = useState(null)
 
+  // Undo delete
+  const [undoItem, setUndoItem] = useState(null)
+  const undoTimerRef = useRef(null)
+
+  const handleDelete = (income) => {
+    const deleted = deleteIncome(income.id)
+    setUndoItem(deleted)
+    clearTimeout(undoTimerRef.current)
+    undoTimerRef.current = setTimeout(() => setUndoItem(null), 5000)
+  }
+
+  const handleUndo = () => {
+    clearTimeout(undoTimerRef.current)
+    restoreIncome(undoItem)
+    setUndoItem(null)
+  }
+
   const handleSave = (data) => {
-    if (editIncome) {
-      updateIncome(editIncome.id, data)
-    } else {
-      addIncome(data)
-    }
+    if (editIncome) updateIncome(editIncome.id, data)
+    else addIncome(data)
     setShowForm(false)
     setEditIncome(null)
   }
@@ -74,7 +78,7 @@ export function IncomePage() {
                 key={i.id}
                 income={i}
                 onEdit={(inc) => { setEditIncome(inc); setShowForm(true) }}
-                onDelete={deleteIncome}
+                onDelete={handleDelete}
                 fmt={fmt}
               />
             ))}
@@ -119,6 +123,13 @@ export function IncomePage() {
           </>
         )}
       </div>
+
+      <UndoToast
+        item={undoItem}
+        itemLabel={undoItem?.label}
+        onUndo={handleUndo}
+        onDismiss={() => setUndoItem(null)}
+      />
 
       <AnimatePresence>
         {showForm && (

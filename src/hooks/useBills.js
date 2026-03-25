@@ -16,8 +16,16 @@ export function useBills() {
   }, [setBills])
 
   const deleteBill = useCallback((id) => {
+    const bill = bills.find(b => b.id === id)
+    const billPayments = payments.filter(p => p.billId === id)
     setBills(prev => prev.filter(b => b.id !== id))
     setPayments(prev => prev.filter(p => p.billId !== id))
+    return { bill, payments: billPayments }
+  }, [bills, payments, setBills, setPayments])
+
+  const restoreBill = useCallback(({ bill, payments: saved = [] }) => {
+    setBills(prev => [...prev, bill])
+    if (saved.length) setPayments(prev => [...prev, ...saved])
   }, [setBills, setPayments])
 
   const getBillsMonth = useCallback((year, month) => {
@@ -44,5 +52,5 @@ export function useBills() {
     setPayments(prev => prev.filter(p => !(p.billId === billId && p.month === monthKey)))
   }, [setPayments])
 
-  return { bills, payments, addBill, updateBill, deleteBill, getBillsMonth, isPaid, markPaid, markUnpaid }
+  return { bills, payments, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid }
 }

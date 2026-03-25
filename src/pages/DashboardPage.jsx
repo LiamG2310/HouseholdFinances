@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
@@ -15,6 +15,7 @@ const stagger = {
 
 export function DashboardPage() {
   const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
+  const [annual, setAnnual] = useState(false)
 
   const now = new Date()
   const year = now.getFullYear()
@@ -25,15 +26,26 @@ export function DashboardPage() {
 
   const monthBills = useMemo(() => getBillsMonth(year, month), [getBillsMonth, year, month])
 
+  const annualBillsTotal = useMemo(() => {
+    let total = 0
+    for (let m = 1; m <= 12; m++) {
+      total += getBillsMonth(year, m).reduce((s, { bill }) => s + bill.amount, 0)
+    }
+    return total
+  }, [getBillsMonth, year])
+
   const totalBills = monthBills.reduce((s, { bill }) => s + bill.amount, 0)
   const paidBills = monthBills.filter(({ bill }) => isPaid(bill.id, mk))
   const unpaidBills = monthBills.filter(({ bill }) => !isPaid(bill.id, mk))
   const paidTotal = paidBills.reduce((s, { bill }) => s + bill.amount, 0)
   const remainingBills = totalBills - paidTotal
-  const balance = monthlyTotal - totalBills
-  const leftover = monthlyTotal - totalBills
+
+  const displayIncome = annual ? monthlyTotal * 12 : monthlyTotal
+  const displayBills  = annual ? annualBillsTotal : totalBills
+  const balance = displayIncome - displayBills
+  const leftover = balance
   const isShortfall = balance < 0
-  const isWarning = !isShortfall && monthlyTotal > 0 && balance < monthlyTotal * 0.1
+  const isWarning = !isShortfall && displayIncome > 0 && balance < displayIncome * 0.1
 
   const overdue = unpaidBills.filter(({ dueDate }) => daysUntil(dueDate) < 0)
   const upcoming = unpaidBills.filter(({ dueDate }) => {
@@ -61,12 +73,26 @@ export function DashboardPage() {
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-slate-400 text-sm">{monthLabel()}</p>
+              <p className="text-slate-400 text-sm">{annual ? String(year) : monthLabel()}</p>
               <h1 className="text-white text-xl font-bold">Overview</h1>
             </div>
-            <div className="text-right">
-              <p className="text-slate-400 text-xs">{daysLeft} days left</p>
-              <p className="text-slate-300 text-sm">in month</p>
+            <div className="flex items-center gap-2">
+              {!annual && (
+                <div className="text-right mr-1">
+                  <p className="text-slate-400 text-xs">{daysLeft} days left</p>
+                  <p className="text-slate-300 text-sm">in month</p>
+                </div>
+              )}
+              <div className="flex bg-slate-800 bg-opacity-50 rounded-lg p-0.5 text-xs">
+                <button
+                  onClick={() => setAnnual(false)}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors ${!annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}
+                >Mo</button>
+                <button
+                  onClick={() => setAnnual(true)}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors ${annual ? 'bg-white bg-opacity-20 text-white' : 'text-slate-400'}`}
+                >Yr</button>
+              </div>
             </div>
           </div>
 
@@ -81,20 +107,20 @@ export function DashboardPage() {
           </div>
 
           {/* Income vs Bills bar */}
-          {monthlyTotal > 0 && (
+          {displayIncome > 0 && (
             <div className="mt-2">
               <div className="flex justify-between text-xs text-slate-400 mb-1">
-                <span>Bills {fmt(totalBills)}</span>
-                <span>Income {fmt(monthlyTotal)}</span>
+                <span>Bills {fmt(displayBills)}</span>
+                <span>Income {fmt(displayIncome)}</span>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${isShortfall ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-indigo-500'}`}
-                  style={{ width: `${Math.min((totalBills / monthlyTotal) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((displayBills / displayIncome) * 100, 100)}%` }}
                 />
               </div>
               <p className="text-center text-xs text-slate-500 mt-1">
-                {monthlyTotal > 0 ? Math.round((totalBills / monthlyTotal) * 100) : 0}% of income goes to bills
+                {Math.round((displayBills / displayIncome) * 100)}% of income goes to bills
               </p>
             </div>
           )}
@@ -150,15 +176,15 @@ export function DashboardPage() {
             <h2 className="text-sm font-medium text-slate-400 mb-3">Household Income</h2>
             <div className="space-y-2">
               {[
-                { name: settings.person1Name, amount: monthlyByPerson('person1') },
-                { name: settings.person2Name, amount: monthlyByPerson('person2') },
+                { name: settings.person1Name, amount: annual ? monthlyByPerson('person1') * 12 : monthlyByPerson('person1') },
+                { name: settings.person2Name, amount: annual ? monthlyByPerson('person2') * 12 : monthlyByPerson('person2') },
               ].filter(p => p.amount > 0).map(p => (
                 <div key={p.name} className="flex items-center gap-3">
                   <span className="text-slate-300 text-sm w-24 truncate">{p.name}</span>
                   <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-indigo-500 rounded-full"
-                      style={{ width: `${(p.amount / monthlyTotal) * 100}%` }}
+                      style={{ width: `${(p.amount / displayIncome) * 100}%` }}
                     />
                   </div>
                   <span className="text-white text-sm font-medium w-20 text-right">{fmt(p.amount)}</span>
@@ -166,7 +192,7 @@ export function DashboardPage() {
               ))}
               <div className="border-t border-slate-700 pt-2 flex justify-between">
                 <span className="text-slate-400 text-sm">Combined</span>
-                <span className="text-green-400 font-semibold">{fmt(monthlyTotal)}</span>
+                <span className="text-green-400 font-semibold">{fmt(displayIncome)}</span>
               </div>
             </div>
           </motion.div>

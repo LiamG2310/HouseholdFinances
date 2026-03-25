@@ -1,37 +1,62 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { BillCard } from '../components/bills/BillCard.jsx'
 import { BillForm } from '../components/bills/BillForm.jsx'
 import { EmptyState } from '../components/shared/EmptyState.jsx'
+import { UndoToast } from '../components/shared/UndoToast.jsx'
+import { monthLabel } from '../utils/dateUtils.js'
 
 export function BillsPage() {
-  const { bills, addBill, updateBill, deleteBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
+  const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
   const [showForm, setShowForm] = useState(false)
   const [editBill, setEditBill] = useState(null)
   const [tab, setTab] = useState('month')
 
+  // Month navigation
   const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth() + 1
-  const mk = `${year}-${String(month).padStart(2, '0')}`
+  const [viewYear, setViewYear] = useState(now.getFullYear())
+  const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === (now.getMonth() + 1)
+  const mk = `${viewYear}-${String(viewMonth).padStart(2, '0')}`
 
-  const monthBills = useMemo(() => getBillsMonth(year, month), [getBillsMonth, year, month])
+  const prevMonth = () => {
+    if (viewMonth === 1) { setViewYear(y => y - 1); setViewMonth(12) }
+    else setViewMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (isCurrentMonth) return
+    if (viewMonth === 12) { setViewYear(y => y + 1); setViewMonth(1) }
+    else setViewMonth(m => m + 1)
+  }
+
+  // Undo delete
+  const [undoItem, setUndoItem] = useState(null)
+  const undoTimerRef = useRef(null)
+
+  const handleDelete = (bill) => {
+    const deleted = deleteBill(bill.id)
+    setUndoItem(deleted)
+    clearTimeout(undoTimerRef.current)
+    undoTimerRef.current = setTimeout(() => setUndoItem(null), 5000)
+  }
+
+  const handleUndo = () => {
+    clearTimeout(undoTimerRef.current)
+    restoreBill(undoItem)
+    setUndoItem(null)
+  }
+
+  const monthBills = useMemo(() => getBillsMonth(viewYear, viewMonth), [getBillsMonth, viewYear, viewMonth])
 
   const handleSave = (data) => {
-    if (editBill) {
-      updateBill(editBill.id, data)
-    } else {
-      addBill(data)
-    }
+    if (editBill) updateBill(editBill.id, data)
+    else addBill(data)
     setShowForm(false)
     setEditBill(null)
   }
 
-  const handleEdit = (bill) => {
-    setEditBill(bill)
-    setShowForm(true)
-  }
+  const handleEdit = (bill) => { setEditBill(bill); setShowForm(true) }
 
   return (
     <div className="flex-1 flex flex-col max-w-lg mx-auto w-full">
@@ -43,7 +68,7 @@ export function BillsPage() {
         >+ Add</button>
       </div>
 
-      <div className="flex px-4 gap-2 mb-4">
+      <div className="flex px-4 gap-2 mb-3">
         <button
           onClick={() => setTab('month')}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'month' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
@@ -53,6 +78,23 @@ export function BillsPage() {
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
         >All Bills</button>
       </div>
+
+      {/* Month navigation (only on month tab) */}
+      {tab === 'month' && (
+        <div className="flex items-center justify-between px-4 mb-3">
+          <button
+            onClick={prevMonth}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
+          >‹</button>
+          <span className="text-sm font-medium text-white">
+            {monthLabel(new Date(viewYear, viewMonth - 1, 1))}
+          </span>
+          <button
+            onClick={nextMonth}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-lg transition-colors ${isCurrentMonth ? 'text-slate-700 cursor-default' : 'text-slate-400 hover:text-white'}`}
+          >›</button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-2">
         {tab === 'month' && (
@@ -66,7 +108,7 @@ export function BillsPage() {
                 paid={isPaid(bill.id, mk)}
                 onTogglePaid={() => isPaid(bill.id, mk) ? markUnpaid(bill.id, mk) : markPaid(bill.id, mk, 'joint', bill.amount)}
                 onEdit={handleEdit}
-                onDelete={deleteBill}
+                onDelete={handleDelete}
                 fmt={fmt}
                 settings={settings}
               />
@@ -93,13 +135,20 @@ export function BillsPage() {
                 paid={false}
                 onTogglePaid={null}
                 onEdit={handleEdit}
-                onDelete={deleteBill}
+                onDelete={handleDelete}
                 fmt={fmt}
                 settings={settings}
               />
             ))
         )}
       </div>
+
+      <UndoToast
+        item={undoItem}
+        itemLabel={undoItem?.bill?.name}
+        onUndo={handleUndo}
+        onDismiss={() => setUndoItem(null)}
+      />
 
       <AnimatePresence>
         {showForm && (

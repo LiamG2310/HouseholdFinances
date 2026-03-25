@@ -31,7 +31,11 @@ export function BillForm({ bill, onSave, onClose, settings }) {
     activeMonths: bill.activeMonths ?? DEFAULTS.activeMonths,
   } : DEFAULTS)
 
-  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+  const [errors, setErrors] = useState({})
+  const set = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
+  }
 
   const toggleMonth = (m) => {
     setForm(prev => ({
@@ -44,7 +48,11 @@ export function BillForm({ bill, onSave, onClose, settings }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.amount) return
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Name is required'
+    if (!form.amount || parseFloat(form.amount) <= 0) errs.amount = 'Enter a valid amount'
+    if (form.frequency === 'custom' && form.activeMonths.length === 0) errs.activeMonths = 'Select at least one month'
+    if (Object.keys(errs).length) { setErrors(errs); return }
     onSave({
       ...form,
       amount: parseFloat(form.amount),
@@ -61,26 +69,26 @@ export function BillForm({ bill, onSave, onClose, settings }) {
         <div>
           <label className={labelCls}>Name</label>
           <input
-            className={inputCls}
+            className={`${inputCls} ${errors.name ? 'border-red-500' : ''}`}
             value={form.name}
             onChange={e => set('name', e.target.value)}
             placeholder="e.g. Rent"
-            required
           />
+          {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
         </div>
 
         <div>
           <label className={labelCls}>Amount ({settings.currency})</label>
           <input
-            className={inputCls}
+            className={`${inputCls} ${errors.amount ? 'border-red-500' : ''}`}
             type="number"
             min="0"
             step="0.01"
             value={form.amount}
             onChange={e => set('amount', e.target.value)}
             placeholder="0.00"
-            required
           />
+          {errors.amount && <p className="text-red-400 text-xs mt-1">{errors.amount}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -138,6 +146,7 @@ export function BillForm({ bill, onSave, onClose, settings }) {
             <p className="text-xs text-slate-500 mt-1.5">
               e.g. council tax: select Apr–Jan (10 months), skip Feb & Mar
             </p>
+            {errors.activeMonths && <p className="text-red-400 text-xs mt-1">{errors.activeMonths}</p>}
           </div>
         )}
 

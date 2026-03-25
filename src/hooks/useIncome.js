@@ -15,7 +15,13 @@ export function useIncome() {
   }, [setIncomes])
 
   const deleteIncome = useCallback((id) => {
+    const income = incomes.find(i => i.id === id)
     setIncomes(prev => prev.filter(i => i.id !== id))
+    return income
+  }, [incomes, setIncomes])
+
+  const restoreIncome = useCallback((income) => {
+    setIncomes(prev => [...prev, income])
   }, [setIncomes])
 
   const monthlyTotal = incomes
@@ -27,5 +33,5 @@ export function useIncome() {
       .filter(i => i.active && i.personId === personId)
       .reduce((sum, i) => sum + toMonthly(i.amount, i.frequency), 0)
 
-  return { incomes, addIncome, updateIncome, deleteIncome, monthlyTotal, monthlyByPerson }
+  return { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson }
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import { Modal } from '../shared/Modal.jsx'
 import { today } from '../../utils/dateUtils.js'
 
@@ -24,11 +25,18 @@ export function IncomeForm({ income, onSave, onClose, settings }) {
     amount: String(income.amount),
   } : DEFAULTS)
 
-  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+  const [errors, setErrors] = useState({})
+  const set = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.label.trim() || !form.amount) return
+    const errs = {}
+    if (!form.label.trim()) errs.label = 'Label is required'
+    if (!form.amount || parseFloat(form.amount) <= 0) errs.amount = 'Enter a valid amount'
+    if (Object.keys(errs).length) { setErrors(errs); return }
     onSave({ ...form, amount: parseFloat(form.amount) })
   }
 
@@ -41,26 +49,26 @@ export function IncomeForm({ income, onSave, onClose, settings }) {
         <div>
           <label className={labelCls}>Label</label>
           <input
-            className={inputCls}
+            className={`${inputCls} ${errors.label ? 'border-red-500' : ''}`}
             value={form.label}
             onChange={e => set('label', e.target.value)}
             placeholder="e.g. Salary"
-            required
           />
+          {errors.label && <p className="text-red-400 text-xs mt-1">{errors.label}</p>}
         </div>
 
         <div>
           <label className={labelCls}>Amount ({settings.currency})</label>
           <input
-            className={inputCls}
+            className={`${inputCls} ${errors.amount ? 'border-red-500' : ''}`}
             type="number"
             min="0"
             step="0.01"
             value={form.amount}
             onChange={e => set('amount', e.target.value)}
             placeholder="0.00"
-            required
           />
+          {errors.amount && <p className="text-red-400 text-xs mt-1">{errors.amount}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

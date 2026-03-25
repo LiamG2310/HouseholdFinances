@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { categoryIcon } from '../../utils/billUtils.js'
 import { formatShortDate, daysUntil } from '../../utils/dateUtils.js'
-import { ConfirmDialog } from '../shared/ConfirmDialog.jsx'
 
 function dueDateLabel(dueDate, paid) {
   if (!dueDate) return null
@@ -36,7 +34,6 @@ const FREQ_LABEL = {
 }
 
 export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, fmt, settings }) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const dateInfo = dueDateLabel(dueDate, paid)
   const bgCls = cardColors(dueDate, paid)
 
@@ -98,17 +95,9 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
 
         <div className="flex flex-col gap-1">
           <motion.button whileTap={{ scale: 0.8 }} onClick={() => onEdit(bill)} className="text-slate-500 hover:text-white text-sm px-1">✏️</motion.button>
-          <motion.button whileTap={{ scale: 0.8 }} onClick={() => setConfirmDelete(true)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</motion.button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => onDelete(bill)} className="text-slate-500 hover:text-red-400 text-sm px-1">🗑️</motion.button>
         </div>
       </motion.div>
-
-      {confirmDelete && (
-        <ConfirmDialog
-          message={`Delete "${bill.name}"? This cannot be undone.`}
-          onConfirm={() => { onDelete(bill.id); setConfirmDelete(false) }}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
     </>
   )
 }
