@@ -16,11 +16,11 @@ export default async function handler(req, res) {
   const url = new URL(`${AUTH_URL}/`)
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('client_id', process.env.TRUELAYER_CLIENT_ID)
-  url.searchParams.set('scope', 'accounts balance')
+  url.searchParams.set('scope', 'info accounts balance cards transactions direct_debits standing_orders offline_access')
   url.searchParams.set('redirect_uri', redirectUri)
-  if (process.env.TRUELAYER_SANDBOX !== 'true') {
-    url.searchParams.set('providers', 'uk-ob-all uk-oauth-all')
-  }
+  url.searchParams.set('providers', process.env.TRUELAYER_SANDBOX === 'true'
+    ? 'uk-cs-mock uk-ob-all uk-oauth-all'
+    : 'uk-ob-all uk-oauth-all')
   url.searchParams.set('state', state)
 
   return res.status(200).json({ url: url.toString() })
