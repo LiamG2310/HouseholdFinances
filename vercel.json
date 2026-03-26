@@ -1,6 +1,10 @@
 {
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [{ "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }]
+    },
+    {
       "source": "/index.html",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     },

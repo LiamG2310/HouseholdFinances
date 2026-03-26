@@ -46,6 +46,7 @@ export function PinGate({ children }) {
   const [unlocked, setUnlocked] = useState(() => isSessionValid())
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
+  const [lockedOut, setLockedOut] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const timerRef = useRef(null)
@@ -86,11 +87,13 @@ export function PinGate({ children }) {
           body: JSON.stringify({ pin: next }),
         })
           .then(res => {
+            if (res.status === 429) { setLockedOut(true); setInput(''); return null }
             if (!res.ok) throw new Error('Incorrect PIN')
             return res.json()
           })
-          .then(({ token }) => {
-            localStorage.setItem(TOKEN_KEY, token)
+          .then(data => {
+            if (!data) return
+            localStorage.setItem(TOKEN_KEY, data.token)
             setUnlocked(true)
           })
           .catch(() => triggerError())
@@ -169,7 +172,7 @@ export function PinGate({ children }) {
       </motion.div>
 
       {/* Keypad */}
-      <div className={`grid grid-cols-3 gap-4 w-72 ${submitting ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`grid grid-cols-3 gap-4 w-72 ${submitting || lockedOut ? 'opacity-50 pointer-events-none' : ''}`}>
         {DIGITS.flat().map((d, i) => {
           if (d === null) return <div key={i} />
           return (
@@ -190,7 +193,15 @@ export function PinGate({ children }) {
       </div>
 
       <AnimatePresence>
-        {error && (
+        {lockedOut && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-red-400 text-sm mt-6 text-center"
+          >Too many attempts. Try again in 15 minutes.</motion.p>
+        )}
+        {error && !lockedOut && (
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
