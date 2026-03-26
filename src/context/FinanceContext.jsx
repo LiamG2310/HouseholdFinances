@@ -118,10 +118,35 @@ export function FinanceProvider({ children }) {
 
   // Pending bill-transaction matches requiring user confirmation
   const [pendingMatches, setPendingMatches] = useState([])
+  const [learnedLinks, setLearnedLinks] = useState({})
 
-  const confirmMatch = (billId, monthKey, amount, transactionId) => {
+  useEffect(() => {
+    if (!USE_API) return
+    fetch('/api/learned-links', { headers: authHeaders() })
+      .then(r => r.json())
+      .then(({ links }) => setLearnedLinks(links || {}))
+      .catch(() => {})
+  }, [])
+
+  const saveLearntLink = async (txDescription, billId) => {
+    const txKey = txDescription.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+    try {
+      const res = await fetch('/api/learned-links', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ txKey, billId }),
+      })
+      if (res.ok) {
+        const { links } = await res.json()
+        setLearnedLinks(links)
+      }
+    } catch {}
+  }
+
+  const confirmMatch = (billId, monthKey, amount, transactionId, txDescription) => {
     billsApi.markPaid(billId, monthKey, 'joint', amount)
     setPendingMatches(prev => prev.filter(m => m.transactionId !== transactionId))
+    if (txDescription) saveLearntLink(txDescription, billId)
   }
 
   const dismissMatch = (transactionId) => {
@@ -131,7 +156,7 @@ export function FinanceProvider({ children }) {
   const fmt = (amount) => formatCurrency(amount, settingsApi.settings.currency)
 
   return (
-    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage, refresh: () => window.location.reload(), truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer, syncRecurring, pendingMatches, setPendingMatches, confirmMatch, dismissMatch }}>
+    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage, refresh: () => window.location.reload(), truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer, syncRecurring, pendingMatches, setPendingMatches, confirmMatch, dismissMatch, learnedLinks }}>
       {children}
     </FinanceContext.Provider>
   )

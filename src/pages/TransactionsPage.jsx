@@ -32,7 +32,7 @@ function categoryIcon(category) {
 }
 
 export function TransactionsPage() {
-  const { truelayer, fmt, refresh, getBillsMonth, isPaid, markPaid, setPendingMatches } = useFinance()
+  const { truelayer, fmt, refresh, getBillsMonth, isPaid, markPaid, setPendingMatches, learnedLinks } = useFinance()
   const now = new Date()
   const [viewYear, setViewYear]   = useState(now.getFullYear())
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
@@ -84,14 +84,33 @@ export function TransactionsPage() {
     const monthBills = getBillsMonth(curYear, curMonth)
     const autoMatched = new Set()
     const fuzzyMatches = []
+    const queuedTxIds = new Set()
 
     for (const tx of transactions) {
       if (tx.amount >= 0) continue
       const absAmt = Math.abs(tx.amount)
+      const txKey = tx.description.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
 
+      // Pass 1: learned link — previously confirmed pairing
+      const learntBillId = learnedLinks[txKey]
+      if (learntBillId) {
+        const learntEntry = monthBills.find(({ bill }) => bill.id === learntBillId)
+        if (learntEntry && !isPaid(learntBillId, monthKey) && !autoMatched.has(learntBillId)) {
+          const amtDiff = Math.abs(absAmt - learntEntry.bill.amount) / learntEntry.bill.amount
+          if (amtDiff <= 0.25) {
+            markPaid(learntBillId, monthKey, 'joint', learntEntry.bill.amount)
+            autoMatched.add(learntBillId)
+            queuedTxIds.add(tx.id)
+            continue
+          }
+        }
+      }
+
+      // Pass 2: name/amount matching
       for (const { bill } of monthBills) {
         if (isPaid(bill.id, monthKey)) continue
         if (autoMatched.has(bill.id)) continue
+        if (queuedTxIds.has(tx.id)) break
 
         const amtDiff = Math.abs(absAmt - bill.amount) / bill.amount
         const score = Math.max(
@@ -99,17 +118,17 @@ export function TransactionsPage() {
           bill.notes ? nameScore(bill.notes, tx.description) : 0,
         )
 
-        // Auto-match: amount within 2% AND strong name match
+        // Auto-match: amount within 2% AND strong name/notes match
         if (amtDiff <= 0.02 && score >= 0.5) {
           markPaid(bill.id, monthKey, 'joint', bill.amount)
           autoMatched.add(bill.id)
+          queuedTxIds.add(tx.id)
           break
         }
 
-        // Fuzzy match: name matches but amount differs up to 15%, or amount matches but name is weak
-        const fuzzyAmount = amtDiff > 0.02 && amtDiff <= 0.15 && score >= 0.5
-        const fuzzyName   = amtDiff <= 0.02 && score > 0 && score < 0.5
-        if (fuzzyAmount || fuzzyName) {
+        // Fuzzy: show on dashboard if amount within 30% OR any name overlap
+        const fuzzy = (amtDiff <= 0.30 && score > 0) || (amtDiff <= 0.05) || (score >= 0.5)
+        if (fuzzy && !autoMatched.has(bill.id)) {
           fuzzyMatches.push({
             transactionId: tx.id,
             billId: bill.id,
@@ -120,6 +139,7 @@ export function TransactionsPage() {
             txDate: tx.date,
             monthKey,
           })
+          queuedTxIds.add(tx.id)
           break
         }
       }

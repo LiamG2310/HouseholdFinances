@@ -193,7 +193,7 @@ export function DashboardPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => confirmMatch(m.billId, m.monthKey, m.billAmount, m.transactionId)}
+                      onClick={() => confirmMatch(m.billId, m.monthKey, m.billAmount, m.transactionId, m.txDescription)}
                       className="flex-1 py-1.5 rounded-lg bg-green-700 hover:bg-green-600 text-white text-xs font-medium transition-colors"
                     >Yes, mark paid</button>
                     <button
