@@ -54,7 +54,7 @@ export function FinanceProvider({ children }) {
   const fmt = (amount) => formatCurrency(amount, settingsApi.settings.currency)
 
   return (
-    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage }}>
+    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage, refresh: () => window.location.reload() }}>
       {children}
     </FinanceContext.Provider>
   )

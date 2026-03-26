@@ -19,11 +19,12 @@ const pageVariants = {
 const pageTransition = { type: 'tween', ease: 'easeInOut', duration: 0.22 }
 
 function App() {
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage] = useState(() => sessionStorage.getItem('hf_page') || 'dashboard')
   const dirRef = useRef(0)
 
   const navigate = (next) => {
     dirRef.current = TABS.indexOf(next) > TABS.indexOf(page) ? 1 : -1
+    sessionStorage.setItem('hf_page', next)
     setPage(next)
   }
 

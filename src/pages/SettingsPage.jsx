@@ -13,7 +13,7 @@ const CURRENCIES = [
 ]
 
 export function SettingsPage() {
-  const { settings, updateSettings, syncStatus, profileImage, updateProfileImage } = useFinance()
+  const { settings, updateSettings, syncStatus, profileImage, updateProfileImage, refresh } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
   const handleLock = () => {
     localStorage.removeItem('hf_session_token')
@@ -73,7 +73,7 @@ export function SettingsPage() {
         <h1 className="text-xl font-bold text-white">Settings</h1>
         {syncConfigured && (
           <button
-            onClick={() => window.location.reload()}
+            onClick={refresh}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
           >↻</button>
         )}

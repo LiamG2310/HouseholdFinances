@@ -5,7 +5,6 @@ import { IncomeForm } from '../components/income/IncomeForm.jsx'
 import { EmptyState } from '../components/shared/EmptyState.jsx'
 import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { toMonthly } from '../utils/billUtils.js'
-import { syncConfigured } from '../hooks/useSync.js'
 
 function IncomeCard({ income, onEdit, onDelete, fmt }) {
   const monthly = toMonthly(income.amount, income.frequency)
@@ -31,7 +30,7 @@ function IncomeCard({ income, onEdit, onDelete, fmt }) {
 }
 
 export function IncomePage() {
-  const { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson, fmt, settings } = useFinance()
+  const { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson, fmt, settings, refresh } = useFinance()
   const [showForm, setShowForm] = useState(false)
   const [editIncome, setEditIncome] = useState(null)
 
@@ -94,12 +93,10 @@ export function IncomePage() {
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Income</h1>
         <div className="flex items-center gap-2">
-          {syncConfigured && (
-            <button
-              onClick={() => window.location.reload()}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
-            >↻</button>
-          )}
+          <button
+            onClick={refresh}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
+          >↻</button>
           <button
             onClick={() => { setEditIncome(null); setShowForm(true) }}
             className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
