@@ -20,6 +20,11 @@
   }
 }
 
+/* Safe area utilities for iOS PWA */
+.pt-safe  { padding-top:    env(safe-area-inset-top) }
+.pb-safe  { padding-bottom: env(safe-area-inset-bottom) }
+.mt-safe  { margin-top:     env(safe-area-inset-top) }
+
 /* ── Theme overrides ──────────────────────────────────────────────────────────
    Each [data-theme] block overrides Tailwind v4's CSS custom properties.
    These rules are NOT in any @layer, so they win over @layer theme.

@@ -34,7 +34,7 @@ function App() {
     <PinGate>
       <GistSync>
         <FinanceProvider>
-          <div className="flex flex-col min-h-svh bg-slate-900 pb-16 overflow-hidden">
+          <div className="flex flex-col min-h-svh bg-slate-900 overflow-hidden pt-safe" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
             <AnimatePresence mode="wait" custom={dirRef.current}>
               <motion.div
                 key={page}

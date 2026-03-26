@@ -120,7 +120,7 @@ export function PinGate({ children }) {
 
   return (
     <motion.div
-      className="min-h-svh bg-slate-900 flex flex-col items-center justify-center p-8"
+      className="min-h-svh bg-slate-900 flex flex-col items-center justify-center p-8 pt-safe"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
