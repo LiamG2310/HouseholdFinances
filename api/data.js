@@ -1,7 +1,10 @@
 import { Redis } from '@upstash/redis'
 import { verifyAuth } from './_auth.js'
 
-const redis = Redis.fromEnv()
+const redis = new Redis({
+  url: process.env.HFSTORE_KV_REST_API_URL,
+  token: process.env.HFSTORE_KV_REST_API_TOKEN,
+})
 const DATA_KEY = 'hf:data'
 
 export default async function handler(req, res) {
