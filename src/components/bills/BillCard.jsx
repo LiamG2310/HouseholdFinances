@@ -33,15 +33,9 @@ const FREQ_LABEL = {
   'one-off': 'one-off',
 }
 
-export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, fmt, settings }) {
+export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, fmt }) {
   const dateInfo = dueDateLabel(dueDate, paid)
   const bgCls = cardColors(dueDate, paid)
-
-  const assignedLabel = () => {
-    if (!bill.assignedTo || bill.assignedTo === 'joint') return null
-    const name = bill.assignedTo === 'person1' ? settings.person1Name : settings.person2Name
-    return <span className="text-xs text-slate-500">{name}</span>
-  }
 
   return (
     <>
@@ -77,7 +71,12 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`font-medium ${paid ? 'line-through text-slate-400' : 'text-white'}`}>{bill.name}</span>
-            {assignedLabel()}
+            {bill.source === 'direct_debit' && (
+              <span className="text-xs bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded font-medium leading-none">DD</span>
+            )}
+            {bill.source === 'standing_order' && (
+              <span className="text-xs bg-purple-900 text-purple-300 px-1.5 py-0.5 rounded font-medium leading-none">SO</span>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             {dateInfo && <span className={`text-xs ${dateInfo.cls}`}>{dateInfo.text}</span>}

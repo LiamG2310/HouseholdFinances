@@ -14,7 +14,7 @@ const stagger = {
 }
 
 export function DashboardPage() {
-  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer } = useFinance()
+  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch } = useFinance()
   const [annual, setAnnual] = useState(false)
 
   const now = new Date()
@@ -61,8 +61,16 @@ export function DashboardPage() {
       .reduce((s, { bill }) => s + bill.amount, 0),
   })).filter(c => c.total > 0)
 
+  const isConnectedWithBalance = truelayer.status === 'connected' && truelayer.data?.accounts?.[0]?.balance
+  const bankBalance = isConnectedWithBalance ? truelayer.data.accounts[0].balance.current : null
+  const afterBills = isConnectedWithBalance ? bankBalance - remainingBills : null
+
   const statusColor = isShortfall ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-green-400'
-  const statusBg = isShortfall ? 'from-red-950 to-slate-900' : isWarning ? 'from-amber-950 to-slate-900' : 'from-indigo-950 to-slate-900'
+  const statusBg = truelayer.status === 'loading'
+    ? 'from-indigo-950 to-slate-900'
+    : isConnectedWithBalance
+      ? (afterBills < 0 ? 'from-red-950 to-slate-900' : afterBills < bankBalance * 0.1 ? 'from-amber-950 to-slate-900' : 'from-indigo-950 to-slate-900')
+      : (isShortfall ? 'from-red-950 to-slate-900' : isWarning ? 'from-amber-950 to-slate-900' : 'from-indigo-950 to-slate-900')
   const paidPct = monthBills.length ? (paidBills.length / monthBills.length) * 100 : 0
 
   return (
@@ -107,20 +115,19 @@ export function DashboardPage() {
 
           {/* Balance */}
           <div className="text-center py-4">
-            {truelayer.status === 'connected' && truelayer.data?.accounts?.[0]?.balance ? (() => {
-              const bankBalance = truelayer.data.accounts[0].balance.current
-              const afterBills = bankBalance - remainingBills
-              const afterColor = afterBills < 0 ? 'text-red-400' : afterBills < bankBalance * 0.1 ? 'text-amber-400' : 'text-green-400'
-              return (
-                <>
-                  <p className="text-slate-400 text-sm mb-1">Current balance</p>
-                  <p className="text-5xl font-bold text-white">{fmt(bankBalance)}</p>
-                  <p className="text-slate-400 text-sm mt-3 mb-0.5">After upcoming bills</p>
-                  <p className={`text-2xl font-semibold ${afterColor}`}>{fmt(afterBills)}</p>
-                  {afterBills < 0 && <p className="text-red-400 text-sm mt-1">Bills exceed balance by {fmt(Math.abs(afterBills))}</p>}
-                </>
-              )
-            })() : (
+            {truelayer.status === 'loading' ? (
+              <div className="flex items-center justify-center h-20">
+                <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : isConnectedWithBalance ? (
+              <>
+                <p className="text-slate-400 text-sm mb-1">Current balance</p>
+                <p className="text-5xl font-bold text-white">{fmt(bankBalance)}</p>
+                <p className="text-slate-400 text-sm mt-3 mb-0.5">After upcoming bills</p>
+                <p className={`text-2xl font-semibold ${afterBills < 0 ? 'text-red-400' : afterBills < bankBalance * 0.1 ? 'text-amber-400' : 'text-green-400'}`}>{fmt(afterBills)}</p>
+                {afterBills < 0 && <p className="text-red-400 text-sm mt-1">Bills exceed balance by {fmt(Math.abs(afterBills))}</p>}
+              </>
+            ) : (
               <>
                 <p className="text-slate-400 text-sm mb-1">
                   {isShortfall ? 'Shortfall this month' : 'Left after bills'}
@@ -164,6 +171,40 @@ export function DashboardPage() {
           <div className="bg-amber-950 border border-amber-900 rounded-xl p-4">
             <p className="text-amber-400 text-sm">Bank connection expired — go to Settings to reconnect.</p>
           </div>
+        )}
+
+        {/* Pending bill-transaction matches requiring confirmation */}
+        {pendingMatches.length > 0 && (
+          <motion.div variants={card} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+            <h2 className="text-sm font-semibold text-amber-400 mb-3">⚠️ Possible bill payments — confirm?</h2>
+            <div className="space-y-3">
+              {pendingMatches.map(m => (
+                <div key={m.transactionId} className="bg-slate-700 rounded-lg p-3">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{m.txDescription}</p>
+                      <p className="text-slate-400 text-xs">{new Date(m.txDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {fmt(m.txAmount)}</p>
+                    </div>
+                    <span className="text-slate-500 text-xs flex-shrink-0">→</span>
+                    <div className="min-w-0 text-right">
+                      <p className="text-white text-sm font-medium truncate">{m.billName}</p>
+                      <p className="text-slate-400 text-xs">{fmt(m.billAmount)} bill</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => confirmMatch(m.billId, m.monthKey, m.billAmount, m.transactionId)}
+                      className="flex-1 py-1.5 rounded-lg bg-green-700 hover:bg-green-600 text-white text-xs font-medium transition-colors"
+                    >Yes, mark paid</button>
+                    <button
+                      onClick={() => dismissMatch(m.transactionId)}
+                      className="flex-1 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 text-slate-300 text-xs font-medium transition-colors"
+                    >Not this bill</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
         {/* Quick stats row */}

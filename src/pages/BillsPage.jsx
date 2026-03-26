@@ -8,7 +8,18 @@ import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { monthLabel } from '../utils/dateUtils.js'
 
 export function BillsPage() {
-  const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, refresh } = useFinance()
+  const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, refresh, truelayer, syncRecurring } = useFinance()
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState(null)
+
+  const handleSyncFromBank = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    const { added } = await syncRecurring()
+    setSyncing(false)
+    setSyncResult(added)
+    setTimeout(() => setSyncResult(null), 4000)
+  }
   const [showForm, setShowForm] = useState(false)
   const [editBill, setEditBill] = useState(null)
   const [tab, setTab] = useState('month')
@@ -68,6 +79,13 @@ export function BillsPage() {
             onClick={refresh}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
           >↻</button>
+          {truelayer.status === 'connected' && (
+            <button
+              onClick={handleSyncFromBank}
+              disabled={syncing}
+              className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+            >{syncing ? 'Syncing…' : syncResult !== null ? `+${syncResult} added` : 'Sync from bank'}</button>
+          )}
           <button
             onClick={() => { setEditBill(null); setShowForm(true) }}
             className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
@@ -117,7 +135,6 @@ export function BillsPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 fmt={fmt}
-                settings={settings}
               />
             ))
         )}
@@ -144,7 +161,6 @@ export function BillsPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 fmt={fmt}
-                settings={settings}
               />
             ))
         )}

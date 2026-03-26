@@ -85,10 +85,53 @@ export function FinanceProvider({ children }) {
     setTruelayer({ status: 'disconnected', data: null, connectedAt: null })
   }
 
+  const syncRecurring = async () => {
+    const res = await fetch('/api/truelayer/recurring', { headers: authHeaders() })
+    if (!res.ok) return { added: 0 }
+    const { directDebits, standingOrders } = await res.json()
+
+    let added = 0
+    const all = [
+      ...directDebits.map(d => ({ ...d, source: 'direct_debit' })),
+      ...standingOrders.map(s => ({ ...s, source: 'standing_order' })),
+    ]
+
+    for (const item of all) {
+      if (billsApi.bills.some(b => b.tlId === item.id)) continue
+      if (!item.amount) continue
+      billsApi.addBill({
+        name: item.name,
+        amount: item.amount,
+        category: item.source === 'standing_order' ? 'housing' : 'subscriptions',
+        frequency: item.frequency,
+        dayOfMonth: 1,
+        activeMonths: [],
+        assignedTo: 'joint',
+        notes: '',
+        source: item.source,
+        tlId: item.id,
+      })
+      added++
+    }
+    return { added }
+  }
+
+  // Pending bill-transaction matches requiring user confirmation
+  const [pendingMatches, setPendingMatches] = useState([])
+
+  const confirmMatch = (billId, monthKey, amount, transactionId) => {
+    billsApi.markPaid(billId, monthKey, 'joint', amount)
+    setPendingMatches(prev => prev.filter(m => m.transactionId !== transactionId))
+  }
+
+  const dismissMatch = (transactionId) => {
+    setPendingMatches(prev => prev.filter(m => m.transactionId !== transactionId))
+  }
+
   const fmt = (amount) => formatCurrency(amount, settingsApi.settings.currency)
 
   return (
-    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage, refresh: () => window.location.reload(), truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer }}>
+    <FinanceContext.Provider value={{ ...billsApi, ...incomeApi, ...settingsApi, fmt, syncStatus, profileImage, updateProfileImage, refresh: () => window.location.reload(), truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer, syncRecurring, pendingMatches, setPendingMatches, confirmMatch, dismissMatch }}>
       {children}
     </FinanceContext.Provider>
   )

@@ -1,7 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { authHeaders } from '../hooks/useSync.js'
 import { monthLabel } from '../utils/dateUtils.js'
+
+function normalise(s) {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+}
+
+function keyWords(name) {
+  return normalise(name).split(/\s+/).filter(w => w.length > 2)
+}
+
+function nameScore(billName, txDescription) {
+  const words = keyWords(billName)
+  if (!words.length) return 0
+  const txLower = normalise(txDescription)
+  const matched = words.filter(w => txLower.includes(w)).length
+  return matched / words.length
+}
 
 function categoryIcon(category) {
   const map = {
@@ -13,11 +29,12 @@ function categoryIcon(category) {
 }
 
 export function TransactionsPage() {
-  const { truelayer, fmt, refresh } = useFinance()
+  const { truelayer, fmt, refresh, getBillsMonth, isPaid, markPaid, setPendingMatches } = useFinance()
   const now = new Date()
   const [viewYear, setViewYear]   = useState(now.getFullYear())
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1)
   const [transactions, setTransactions] = useState([])
+  const processedMonthRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -48,6 +65,67 @@ export function TransactionsPage() {
   }, [truelayer.status, viewYear, viewMonth])
 
   useEffect(() => { load() }, [load])
+
+  // Auto-match transactions against bills for the current month
+  useEffect(() => {
+    const curYear = now.getFullYear()
+    const curMonth = now.getMonth() + 1
+    if (viewYear !== curYear || viewMonth !== curMonth) return
+    if (transactions.length === 0) return
+
+    // Only process once per month load to avoid repeated marking
+    const monthKey = `${viewYear}-${String(viewMonth).padStart(2, '0')}`
+    if (processedMonthRef.current === monthKey) return
+    processedMonthRef.current = monthKey
+
+    const monthBills = getBillsMonth(curYear, curMonth)
+    const autoMatched = new Set()
+    const fuzzyMatches = []
+
+    for (const tx of transactions) {
+      if (tx.amount >= 0) continue
+      const absAmt = Math.abs(tx.amount)
+
+      for (const { bill } of monthBills) {
+        if (isPaid(bill.id, monthKey)) continue
+        if (autoMatched.has(bill.id)) continue
+
+        const amtDiff = Math.abs(absAmt - bill.amount) / bill.amount
+        const score = nameScore(bill.name, tx.description)
+
+        // Auto-match: amount within 2% AND strong name match
+        if (amtDiff <= 0.02 && score >= 0.5) {
+          markPaid(bill.id, monthKey, 'joint', bill.amount)
+          autoMatched.add(bill.id)
+          break
+        }
+
+        // Fuzzy match: name matches but amount differs up to 15%, or amount matches but name is weak
+        const fuzzyAmount = amtDiff > 0.02 && amtDiff <= 0.15 && score >= 0.5
+        const fuzzyName   = amtDiff <= 0.02 && score > 0 && score < 0.5
+        if (fuzzyAmount || fuzzyName) {
+          fuzzyMatches.push({
+            transactionId: tx.id,
+            billId: bill.id,
+            billName: bill.name,
+            billAmount: bill.amount,
+            txDescription: tx.description,
+            txAmount: absAmt,
+            txDate: tx.date,
+            monthKey,
+          })
+          break
+        }
+      }
+    }
+
+    if (fuzzyMatches.length > 0) {
+      setPendingMatches(prev => {
+        const existingIds = new Set(prev.map(m => m.transactionId))
+        return [...prev, ...fuzzyMatches.filter(m => !existingIds.has(m.transactionId))]
+      })
+    }
+  }, [transactions, viewYear, viewMonth])
 
   const totalIn  = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
   const totalOut = transactions.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0)

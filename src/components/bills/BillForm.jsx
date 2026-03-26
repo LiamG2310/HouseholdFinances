@@ -18,7 +18,6 @@ const DEFAULTS = {
   dayOfMonth: 1,
   nextDueDate: today(),
   activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12],
-  assignedTo: 'joint',
   notes: '',
 }
 
@@ -163,15 +162,6 @@ export function BillForm({ bill, onSave, onClose, settings }) {
             />
           </div>
         )}
-
-        <div>
-          <label className={labelCls}>Assigned to</label>
-          <select className={inputCls} value={form.assignedTo} onChange={e => set('assignedTo', e.target.value)}>
-            <option value="joint">Joint</option>
-            <option value="person1">{settings.person1Name}</option>
-            <option value="person2">{settings.person2Name}</option>
-          </select>
-        </div>
 
         <div>
           <label className={labelCls}>Notes (optional)</label>
