@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
 import { categoryIcon, CATEGORIES } from '../utils/billUtils.js'
+import { syncConfigured } from '../hooks/useSync.js'
 
 const card = {
   hidden: { opacity: 0, y: 16 },
@@ -85,6 +86,12 @@ export function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {syncConfigured && (
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 bg-opacity-50 text-slate-400 hover:text-white text-lg"
+                >↻</button>
+              )}
               {!annual && (
                 <div className="text-right mr-1">
                   <p className="text-slate-400 text-xs">{daysLeft} days left</p>

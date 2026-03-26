@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog.jsx'
 import { syncConfigured } from '../hooks/useSync.js'
+
 import { THEMES, applyTheme, applyMode } from '../utils/themeUtils.js'
 
 const CURRENCIES = [
@@ -68,7 +69,15 @@ export function SettingsPage() {
   return (
     <div className="flex-1 overflow-y-auto">
     <div className="max-w-lg mx-auto w-full p-4 space-y-6 pb-24">
-      <h1 className="text-xl font-bold text-white">Settings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Settings</h1>
+        {syncConfigured && (
+          <button
+            onClick={() => window.location.reload()}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
+          >↻</button>
+        )}
+      </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
         <h2 className="text-sm font-medium text-slate-400">Household</h2>

@@ -6,6 +6,7 @@ import { BillForm } from '../components/bills/BillForm.jsx'
 import { EmptyState } from '../components/shared/EmptyState.jsx'
 import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { monthLabel } from '../utils/dateUtils.js'
+import { syncConfigured } from '../hooks/useSync.js'
 
 export function BillsPage() {
   const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings } = useFinance()
@@ -63,10 +64,18 @@ export function BillsPage() {
       <div className="max-w-lg mx-auto w-full">
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Bills</h1>
-        <button
-          onClick={() => { setEditBill(null); setShowForm(true) }}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
-        >+ Add</button>
+        <div className="flex items-center gap-2">
+          {syncConfigured && (
+            <button
+              onClick={() => window.location.reload()}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
+            >↻</button>
+          )}
+          <button
+            onClick={() => { setEditBill(null); setShowForm(true) }}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >+ Add</button>
+        </div>
       </div>
 
       <div className="flex px-4 gap-2 mb-3">
