@@ -1,7 +1,7 @@
+import { kv } from '@vercel/kv'
 import { verifyAuth } from './_auth.js'
 
-const BIN_URL = `https://api.jsonbin.io/v3/b/${process.env.JSONBIN_BIN_ID}`
-const KEY = process.env.JSONBIN_KEY
+const DATA_KEY = 'hf:data'
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
@@ -10,21 +10,12 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: 'Unauthorised' })
 
   if (req.method === 'GET') {
-    const r = await fetch(`${BIN_URL}/latest`, {
-      headers: { 'X-Master-Key': KEY },
-    })
-    if (!r.ok) return res.status(502).json({ error: 'Upstream error' })
-    const { record } = await r.json()
-    return res.status(200).json(record)
+    const data = await kv.get(DATA_KEY)
+    return res.status(200).json(data || {})
   }
 
   if (req.method === 'PUT') {
-    const r = await fetch(BIN_URL, {
-      method: 'PUT',
-      headers: { 'X-Master-Key': KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body),
-    })
-    if (!r.ok) return res.status(502).json({ error: 'Upstream error' })
+    await kv.set(DATA_KEY, req.body)
     return res.status(200).json({ ok: true })
   }
 
