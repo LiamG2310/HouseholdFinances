@@ -37,7 +37,7 @@ function App() {
           {/* height:100svh + flex column = BottomNav stays pinned without position:fixed,
               which prevents the iOS PWA viewport-shift jump on scroll-heavy pages */}
           <div className="flex flex-col bg-slate-900 pt-safe" style={{ height: '100dvh' }}>
-            <div className="flex-1 min-h-0 overflow-x-hidden">
+            <div className="flex-1 min-h-0" style={{ overflowX: 'clip' }}>
               <AnimatePresence mode="wait" custom={dirRef.current}>
                 <motion.div
                   key={page}
