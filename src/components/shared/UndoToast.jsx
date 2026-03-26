@@ -31,7 +31,7 @@ export function UndoToast({ item, itemLabel, onUndo, onDismiss }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="fixed bottom-20 left-4 right-4 max-w-lg mx-auto z-50"
+          className="fixed left-4 right-4 max-w-lg mx-auto z-50" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.75rem)' }}
         >
           <div className="bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg">
             <span className="text-slate-300 text-sm flex-1 truncate">

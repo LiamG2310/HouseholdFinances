@@ -24,7 +24,7 @@ export function BottomNav({ active, onSelect }) {
   const { syncStatus } = useFinance()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className="bg-slate-900 border-t border-slate-800 flex-shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex max-w-lg mx-auto relative">
         <SyncDot status={syncStatus} />
         {TABS.map(tab => (

@@ -34,23 +34,27 @@ function App() {
     <PinGate>
       <GistSync>
         <FinanceProvider>
-          <div className="flex flex-col min-h-svh bg-slate-900 overflow-hidden pt-safe" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
-            <AnimatePresence mode="wait" custom={dirRef.current}>
-              <motion.div
-                key={page}
-                custom={dirRef.current}
-                variants={pageVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={pageTransition}
-                className="flex flex-col flex-1"
-              >
-                <PageComponent />
-              </motion.div>
-            </AnimatePresence>
+          {/* height:100svh + flex column = BottomNav stays pinned without position:fixed,
+              which prevents the iOS PWA viewport-shift jump on scroll-heavy pages */}
+          <div className="flex flex-col bg-slate-900 pt-safe" style={{ height: '100svh' }}>
+            <div className="flex-1 min-h-0 relative overflow-hidden">
+              <AnimatePresence mode="wait" custom={dirRef.current}>
+                <motion.div
+                  key={page}
+                  custom={dirRef.current}
+                  variants={pageVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={pageTransition}
+                  className="absolute inset-0 flex flex-col"
+                >
+                  <PageComponent />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <BottomNav active={page} onSelect={navigate} />
           </div>
-          <BottomNav active={page} onSelect={navigate} />
         </FinanceProvider>
       </GistSync>
     </PinGate>
