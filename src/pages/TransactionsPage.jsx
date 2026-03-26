@@ -7,15 +7,18 @@ function normalise(s) {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
 }
 
-function keyWords(name) {
-  return normalise(name).split(/\s+/).filter(w => w.length > 2)
-}
-
 function nameScore(billName, txDescription) {
-  const words = keyWords(billName)
+  const billNorm = normalise(billName)
+  const txNorm = normalise(txDescription)
+
+  // Direct: the full bill name appears in the transaction description
+  if (txNorm.includes(billNorm)) return 1
+
+  // Word-level: filter stop words but keep short names (EE, BT, O2 etc.)
+  const stopWords = new Set(['and', 'the', 'for', 'ltd', 'plc', 'llp', 'limited'])
+  const words = billNorm.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w))
   if (!words.length) return 0
-  const txLower = normalise(txDescription)
-  const matched = words.filter(w => txLower.includes(w)).length
+  const matched = words.filter(w => txNorm.includes(w)).length
   return matched / words.length
 }
 
