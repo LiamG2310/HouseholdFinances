@@ -15,6 +15,7 @@ const DEFAULTS = {
   amount: '',
   personId: 'person1',
   frequency: 'monthly',
+  payDay: 1,
   nextDate: today(),
 }
 
@@ -87,6 +88,21 @@ export function IncomeForm({ income, onSave, onClose, settings }) {
             </select>
           </div>
         </div>
+
+        {form.frequency === 'monthly' && (
+          <div>
+            <label className={labelCls}>Payment day of month</label>
+            <input
+              className={inputCls}
+              type="number"
+              min="1"
+              max="28"
+              value={form.payDay || 1}
+              onChange={e => set('payDay', parseInt(e.target.value) || 1)}
+            />
+            <p className="text-xs text-slate-500 mt-1">Day the money arrives in your account</p>
+          </div>
+        )}
 
         <button
           type="submit"

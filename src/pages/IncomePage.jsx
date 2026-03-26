@@ -17,6 +17,9 @@ function IncomeCard({ income, onEdit, onDelete, fmt }) {
       </div>
       <div className="text-right">
         <div className="text-white font-semibold">{fmt(income.amount)}</div>
+        {income.frequency === 'monthly' && income.payDay && (
+          <div className="text-slate-400 text-xs">day {income.payDay}</div>
+        )}
         {income.frequency !== 'monthly' && (
           <div className="text-slate-400 text-xs">{fmt(monthly)}/mo</div>
         )}

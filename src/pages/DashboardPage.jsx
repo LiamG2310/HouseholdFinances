@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
-import { categoryIcon, CATEGORIES } from '../utils/billUtils.js'
+import { categoryIcon, CATEGORIES, isBillAtRisk } from '../utils/billUtils.js'
 
 const card = {
   hidden: { opacity: 0, y: 16 },
@@ -14,7 +14,7 @@ const stagger = {
 }
 
 export function DashboardPage() {
-  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch } = useFinance()
+  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch, incomes } = useFinance()
   const [annual, setAnnual] = useState(false)
 
   const now = new Date()
@@ -287,6 +287,9 @@ export function DashboardPage() {
                     <p className="text-white font-medium truncate">{bill.name}</p>
                     <p className="text-red-400 text-xs">{formatShortDate(dueDate)}</p>
                   </div>
+                  {isBillAtRisk(dueDate, incomes, monthBills) && (
+                    <span className="text-amber-400 text-xs">⚡</span>
+                  )}
                   <span className="text-white font-semibold">{fmt(bill.amount)}</span>
                 </div>
               ))}
@@ -301,8 +304,9 @@ export function DashboardPage() {
             <div className="space-y-2">
               {upcoming.map(({ bill, dueDate }) => {
                 const days = daysUntil(dueDate)
+                const atRisk = isBillAtRisk(dueDate, incomes, monthBills)
                 return (
-                  <div key={bill.id} className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-3">
+                  <div key={bill.id} className={`flex items-center gap-3 rounded-xl p-3 border ${atRisk ? 'bg-amber-950 border-amber-800' : 'bg-slate-800 border-slate-700'}`}>
                     <button
                       onClick={() => markPaid(bill.id, mk, 'joint', bill.amount)}
                       className="w-6 h-6 rounded-full border-2 border-slate-500 flex-shrink-0 hover:border-green-500 transition-colors"
@@ -310,8 +314,9 @@ export function DashboardPage() {
                     <span className="text-xl">{categoryIcon(bill.category)}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium truncate">{bill.name}</p>
-                      <p className="text-slate-400 text-xs">
+                      <p className={`text-xs ${atRisk ? 'text-amber-400' : 'text-slate-400'}`}>
                         {days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`} · {formatShortDate(dueDate)}
+                        {atRisk && ' · ⚡ Income may not arrive in time'}
                       </p>
                     </div>
                     <span className="text-white font-semibold">{fmt(bill.amount)}</span>

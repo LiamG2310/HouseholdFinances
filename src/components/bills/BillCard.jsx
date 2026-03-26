@@ -33,7 +33,7 @@ const FREQ_LABEL = {
   'one-off': 'one-off',
 }
 
-export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, fmt }) {
+export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, fmt, atRisk }) {
   const dateInfo = dueDateLabel(dueDate, paid)
   const bgCls = cardColors(dueDate, paid)
 
@@ -78,8 +78,9 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
               <span className="text-xs bg-purple-900 text-purple-300 px-1.5 py-0.5 rounded font-medium leading-none">SO</span>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             {dateInfo && <span className={`text-xs ${dateInfo.cls}`}>{dateInfo.text}</span>}
+            {!paid && atRisk && <span className="text-xs text-amber-400">⚡ Timing risk</span>}
             {!dateInfo && bill.notes && <span className="text-xs text-slate-500 truncate">{bill.notes}</span>}
           </div>
           {dateInfo && bill.notes && (

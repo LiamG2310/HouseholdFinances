@@ -6,9 +6,10 @@ import { BillForm } from '../components/bills/BillForm.jsx'
 import { EmptyState } from '../components/shared/EmptyState.jsx'
 import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { monthLabel } from '../utils/dateUtils.js'
+import { isBillAtRisk } from '../utils/billUtils.js'
 
 export function BillsPage() {
-  const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, refresh, truelayer, syncRecurring } = useFinance()
+  const { bills, addBill, updateBill, deleteBill, restoreBill, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, refresh, truelayer, syncRecurring, incomes } = useFinance()
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState(null)
 
@@ -131,6 +132,7 @@ export function BillsPage() {
                 bill={bill}
                 dueDate={dueDate}
                 paid={isPaid(bill.id, mk)}
+                atRisk={!isPaid(bill.id, mk) && isBillAtRisk(dueDate, incomes, monthBills)}
                 onTogglePaid={() => isPaid(bill.id, mk) ? markUnpaid(bill.id, mk) : markPaid(bill.id, mk, 'joint', bill.amount)}
                 onEdit={handleEdit}
                 onDelete={handleDelete}

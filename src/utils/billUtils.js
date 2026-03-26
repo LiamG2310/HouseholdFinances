@@ -122,6 +122,34 @@ export function categoryIcon(value) {
   return CATEGORIES.find(c => c.value === value)?.icon ?? '📋'
 }
 
+// Returns the cumulative income received from the start of the month up to and including `upToDay`.
+// upToDay=0 means nothing has arrived yet.
+export function cumulativeMonthlyIncome(incomes, upToDay) {
+  return incomes.filter(i => i.active).reduce((sum, i) => {
+    if (i.frequency === 'monthly') {
+      const pd = i.payDay || 1
+      return sum + (pd <= upToDay ? i.amount : 0)
+    }
+    if (i.frequency === 'weekly')      return sum + i.amount * (upToDay / 7)
+    if (i.frequency === 'fortnightly') return sum + i.amount * (upToDay / 14)
+    if (i.frequency === 'annual')      return sum + (i.amount / 12) * (upToDay / 31)
+    return sum
+  }, 0)
+}
+
+// Returns true if a bill is at risk of not having funds available the day before it's due.
+// monthBills is the full { bill, dueDate }[] array for the month.
+export function isBillAtRisk(dueDate, incomes, monthBills) {
+  if (!dueDate || !incomes.some(i => i.active && i.payDay)) return false
+  const dueDay = new Date(dueDate).getDate()
+  const dayBefore = Math.max(0, dueDay - 1)
+  const incomeAvailable = cumulativeMonthlyIncome(incomes, dayBefore)
+  const billsDue = monthBills
+    .filter(({ dueDate: d }) => d && new Date(d).getDate() <= dueDay)
+    .reduce((s, { bill }) => s + bill.amount, 0)
+  return incomeAvailable < billsDue
+}
+
 export const FREQUENCIES = [
   { value: 'monthly',     label: 'Monthly' },
   { value: 'weekly',      label: 'Weekly' },
