@@ -103,7 +103,7 @@ export function IncomePage() {
         <div className="text-3xl font-bold text-white mt-1">{fmt(monthlyTotal)}</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-24 space-y-6">
         {incomes.length === 0 ? (
           <EmptyState
             icon="💰"

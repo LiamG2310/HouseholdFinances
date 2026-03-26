@@ -96,7 +96,7 @@ export function BillsPage() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-24 space-y-2">
         {tab === 'month' && (
           monthBills.length === 0
             ? <EmptyState icon="📅" message="No bills due this month" />
