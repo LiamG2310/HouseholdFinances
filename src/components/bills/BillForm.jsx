@@ -25,7 +25,7 @@ export function BillForm({ bill, onSave, onClose, settings }) {
   const [form, setForm] = useState(bill ? {
     ...DEFAULTS,
     ...bill,
-    amount: String(bill.amount),
+    amount: bill.needsAmount ? '' : String(bill.amount),
     dayOfMonth: bill.dayOfMonth ?? 1,
     activeMonths: bill.activeMonths ?? DEFAULTS.activeMonths,
   } : DEFAULTS)

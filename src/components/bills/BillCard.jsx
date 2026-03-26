@@ -88,8 +88,15 @@ export function BillCard({ bill, dueDate, paid, onTogglePaid, onEdit, onDelete, 
         </div>
 
         <div className="text-right flex-shrink-0">
-          <div className="font-semibold text-white">{fmt(bill.amount)}</div>
-          <div className="text-xs text-slate-500">{FREQ_LABEL[bill.frequency] ?? bill.frequency}</div>
+          {bill.needsAmount ? (
+            <button
+              onClick={() => onEdit(bill)}
+              className="text-amber-400 text-xs font-medium bg-amber-950 border border-amber-800 px-2 py-1 rounded-lg hover:bg-amber-900 transition-colors"
+            >Set amount</button>
+          ) : (
+            <div className="font-semibold text-white">{fmt(bill.amount)}</div>
+          )}
+          <div className="text-xs text-slate-500 mt-0.5">{FREQ_LABEL[bill.frequency] ?? bill.frequency}</div>
         </div>
 
         <div className="flex flex-col gap-1">

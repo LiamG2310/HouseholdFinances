@@ -98,10 +98,10 @@ export function FinanceProvider({ children }) {
 
     for (const item of all) {
       if (billsApi.bills.some(b => b.tlId === item.id)) continue
-      if (!item.amount) continue
       billsApi.addBill({
         name: item.name,
-        amount: item.amount,
+        amount: item.amount || 0,
+        needsAmount: !item.amount,
         category: item.source === 'standing_order' ? 'housing' : 'subscriptions',
         frequency: item.frequency,
         dayOfMonth: 1,

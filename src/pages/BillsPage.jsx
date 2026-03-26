@@ -61,7 +61,7 @@ export function BillsPage() {
   const monthBills = useMemo(() => getBillsMonth(viewYear, viewMonth), [getBillsMonth, viewYear, viewMonth])
 
   const handleSave = (data) => {
-    if (editBill) updateBill(editBill.id, data)
+    if (editBill) updateBill(editBill.id, { ...data, needsAmount: false })
     else addBill(data)
     setShowForm(false)
     setEditBill(null)
