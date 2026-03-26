@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const url = new URL(`${AUTH_URL}/`)
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('client_id', process.env.TRUELAYER_CLIENT_ID)
-  url.searchParams.set('scope', 'accounts balance offline_access')
+  url.searchParams.set('scope', 'accounts balance')
   url.searchParams.set('redirect_uri', redirectUri)
   if (process.env.TRUELAYER_SANDBOX !== 'true') {
     url.searchParams.set('providers', 'uk-ob-all uk-oauth-all')
