@@ -1,32 +1,63 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const CORRECT_PIN = import.meta.env.VITE_PIN || '1234'
-const EXPIRY_KEY = 'hf_lock_expiry'
-const SESSION_MS = 30 * 60 * 1000 // 30 minutes
+const USE_API = import.meta.env.VITE_USE_API === 'true'
+const CORRECT_PIN = import.meta.env.VITE_PIN || '1234' // dev fallback only
+const TOKEN_KEY = 'hf_session_token'
+const EXPIRY_KEY = 'hf_lock_expiry'         // dev fallback only
+const SESSION_MS = 30 * 60 * 1000
 
 function getProfileImage() {
   return localStorage.getItem('hf_profile_image') || null
 }
 
-function getExpiry() { return parseInt(localStorage.getItem(EXPIRY_KEY) || '0') }
-function saveExpiry() { localStorage.setItem(EXPIRY_KEY, String(Date.now() + SESSION_MS)) }
-function clearExpiry() { localStorage.removeItem(EXPIRY_KEY) }
+// Read JWT expiry without verifying signature (server verifies on every API call)
+function parseJwt(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+  } catch { return null }
+}
+
+function isSessionValid() {
+  if (USE_API) {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) return false
+    const payload = parseJwt(token)
+    return payload ? payload.exp * 1000 > Date.now() : false
+  }
+  return Date.now() < parseInt(localStorage.getItem(EXPIRY_KEY) || '0')
+}
+
+function getSessionRemaining() {
+  if (USE_API) {
+    const token = localStorage.getItem(TOKEN_KEY)
+    const payload = parseJwt(token)
+    return payload ? Math.max(0, payload.exp * 1000 - Date.now()) : 0
+  }
+  return Math.max(0, parseInt(localStorage.getItem(EXPIRY_KEY) || '0') - Date.now())
+}
+
+function clearSession() {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(EXPIRY_KEY)
+}
 
 export function PinGate({ children }) {
-  const [unlocked, setUnlocked] = useState(() => Date.now() < getExpiry())
+  const [unlocked, setUnlocked] = useState(() => isSessionValid())
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
   const timerRef = useRef(null)
   const profileImage = getProfileImage()
 
-  // Auto-lock when the 30-minute window expires while the app is open
+  // Auto-lock when session expires while app is open
   useEffect(() => {
     if (!unlocked) return
-    const remaining = getExpiry() - Date.now()
+    const remaining = getSessionRemaining()
+    if (remaining <= 0) { clearSession(); setUnlocked(false); return }
     timerRef.current = setTimeout(() => {
-      clearExpiry()
+      clearSession()
       setUnlocked(false)
     }, remaining)
     return () => clearTimeout(timerRef.current)
@@ -34,20 +65,43 @@ export function PinGate({ children }) {
 
   if (unlocked) return children
 
+  const triggerError = () => {
+    setShakeKey(k => k + 1)
+    setError(true)
+    setTimeout(() => { setInput(''); setError(false) }, 600)
+  }
+
   const handleDigit = (d) => {
-    if (input.length >= 4) return
+    if (input.length >= 4 || submitting) return
     const next = input + d
     setInput(next)
     setError(false)
 
     if (next.length === 4) {
-      if (next === CORRECT_PIN) {
-        saveExpiry()
-        setUnlocked(true)
+      if (USE_API) {
+        setSubmitting(true)
+        fetch('/api/pin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: next }),
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('Incorrect PIN')
+            return res.json()
+          })
+          .then(({ token }) => {
+            localStorage.setItem(TOKEN_KEY, token)
+            setUnlocked(true)
+          })
+          .catch(() => triggerError())
+          .finally(() => setSubmitting(false))
       } else {
-        setShakeKey(k => k + 1)
-        setError(true)
-        setTimeout(() => { setInput(''); setError(false) }, 600)
+        if (next === CORRECT_PIN) {
+          localStorage.setItem(EXPIRY_KEY, String(Date.now() + SESSION_MS))
+          setUnlocked(true)
+        } else {
+          triggerError()
+        }
       }
     }
   }
@@ -115,7 +169,7 @@ export function PinGate({ children }) {
       </motion.div>
 
       {/* Keypad */}
-      <div className="grid grid-cols-3 gap-4 w-72">
+      <div className={`grid grid-cols-3 gap-4 w-72 ${submitting ? 'opacity-50 pointer-events-none' : ''}`}>
         {DIGITS.flat().map((d, i) => {
           if (d === null) return <div key={i} />
           return (

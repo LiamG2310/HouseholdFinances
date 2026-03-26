@@ -15,6 +15,8 @@ export function SettingsPage() {
   const { settings, updateSettings, syncStatus, profileImage, updateProfileImage } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
   const handleLock = () => {
+    localStorage.removeItem('hf_session_token')
+    localStorage.removeItem('hf_lock_expiry')
     window.location.reload()
   }
 
