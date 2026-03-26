@@ -237,7 +237,9 @@ export function SettingsPage() {
           <>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-              <span className="text-sm text-green-400">Connected</span>
+              <span className="text-sm text-green-400">
+                Connected{truelayer.data?.accounts?.[0]?.provider ? ` · ${truelayer.data.accounts[0].provider}` : ''}
+              </span>
               {truelayer.connectedAt && (
                 <span className="text-xs text-slate-500 ml-auto">
                   since {new Date(truelayer.connectedAt).toLocaleDateString()}
