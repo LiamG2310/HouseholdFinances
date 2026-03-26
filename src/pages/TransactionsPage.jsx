@@ -94,7 +94,10 @@ export function TransactionsPage() {
         if (autoMatched.has(bill.id)) continue
 
         const amtDiff = Math.abs(absAmt - bill.amount) / bill.amount
-        const score = nameScore(bill.name, tx.description)
+        const score = Math.max(
+          nameScore(bill.name, tx.description),
+          bill.notes ? nameScore(bill.notes, tx.description) : 0,
+        )
 
         // Auto-match: amount within 2% AND strong name match
         if (amtDiff <= 0.02 && score >= 0.5) {
