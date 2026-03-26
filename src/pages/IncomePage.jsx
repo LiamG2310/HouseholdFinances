@@ -88,7 +88,8 @@ export function IncomePage() {
   )
 
   return (
-    <div className="flex-1 flex flex-col max-w-lg mx-auto w-full">
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-lg mx-auto w-full">
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Income</h1>
         <button
@@ -103,7 +104,7 @@ export function IncomePage() {
         <div className="text-3xl font-bold text-white mt-1">{fmt(monthlyTotal)}</div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-24 space-y-6">
+      <div className="px-4 pb-24 space-y-6">
         {incomes.length === 0 ? (
           <EmptyState
             icon="💰"
@@ -122,6 +123,7 @@ export function IncomePage() {
             {jointIncomes.length > 0 && <Section title="Joint" items={jointIncomes} />}
           </>
         )}
+      </div>
       </div>
 
       <UndoToast

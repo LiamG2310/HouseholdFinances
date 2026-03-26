@@ -66,7 +66,8 @@ export function SettingsPage() {
   const labelCls = 'block text-sm text-slate-400 mb-1'
 
   return (
-    <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 space-y-6 pb-24">
+    <div className="flex-1 overflow-y-auto">
+    <div className="max-w-lg mx-auto w-full p-4 space-y-6 pb-24">
       <h1 className="text-xl font-bold text-white">Settings</h1>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
@@ -240,6 +241,7 @@ export function SettingsPage() {
           onCancel={() => setConfirmReset(false)}
         />
       )}
+    </div>
     </div>
   )
 }
