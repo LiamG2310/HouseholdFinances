@@ -2,10 +2,11 @@ import { useFinance } from '../../context/FinanceContext.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const TABS = [
-  { id: 'dashboard', label: 'Overview', icon: '📊' },
-  { id: 'bills',     label: 'Bills',    icon: '📋' },
-  { id: 'income',    label: 'Income',   icon: '💰' },
-  { id: 'settings',  label: 'Settings', icon: '⚙️' },
+  { id: 'dashboard',    label: 'Overview', icon: '📊' },
+  { id: 'transactions', label: 'Spending', icon: '💳' },
+  { id: 'bills',        label: 'Bills',    icon: '📋' },
+  { id: 'income',       label: 'Income',   icon: '💰' },
+  { id: 'settings',     label: 'Settings', icon: '⚙️' },
 ]
 
 function SyncDot({ status }) {

@@ -107,12 +107,29 @@ export function DashboardPage() {
 
           {/* Balance */}
           <div className="text-center py-4">
-            <p className="text-slate-400 text-sm mb-1">
-              {isShortfall ? 'Shortfall this month' : 'Left after bills'}
-            </p>
-            <p className={`text-5xl font-bold ${statusColor}`}>{fmt(Math.abs(leftover))}</p>
-            {isShortfall && <p className="text-red-400 text-sm mt-1">You're {fmt(Math.abs(balance))} short</p>}
-            {isWarning && <p className="text-amber-400 text-sm mt-1">Tight month — less than 10% buffer</p>}
+            {truelayer.status === 'connected' && truelayer.data?.accounts?.[0]?.balance ? (() => {
+              const bankBalance = truelayer.data.accounts[0].balance.current
+              const afterBills = bankBalance - remainingBills
+              const afterColor = afterBills < 0 ? 'text-red-400' : afterBills < bankBalance * 0.1 ? 'text-amber-400' : 'text-green-400'
+              return (
+                <>
+                  <p className="text-slate-400 text-sm mb-1">Current balance</p>
+                  <p className="text-5xl font-bold text-white">{fmt(bankBalance)}</p>
+                  <p className="text-slate-400 text-sm mt-3 mb-0.5">After upcoming bills</p>
+                  <p className={`text-2xl font-semibold ${afterColor}`}>{fmt(afterBills)}</p>
+                  {afterBills < 0 && <p className="text-red-400 text-sm mt-1">Bills exceed balance by {fmt(Math.abs(afterBills))}</p>}
+                </>
+              )
+            })() : (
+              <>
+                <p className="text-slate-400 text-sm mb-1">
+                  {isShortfall ? 'Shortfall this month' : 'Left after bills'}
+                </p>
+                <p className={`text-5xl font-bold ${statusColor}`}>{fmt(Math.abs(leftover))}</p>
+                {isShortfall && <p className="text-red-400 text-sm mt-1">You're {fmt(Math.abs(balance))} short</p>}
+                {isWarning && <p className="text-amber-400 text-sm mt-1">Tight month — less than 10% buffer</p>}
+              </>
+            )}
           </div>
 
           {/* Income vs Bills bar */}
@@ -143,36 +160,6 @@ export function DashboardPage() {
         animate="show"
       >
 
-        {/* Bank balances — shown first if connected */}
-        {truelayer.status === 'connected' && truelayer.data?.accounts?.length > 0 && (
-          <motion.div variants={card} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-slate-400">Bank accounts</h2>
-              <button onClick={syncTruelayer} className="text-xs text-indigo-400 hover:text-indigo-300">Refresh</button>
-            </div>
-            <div className="space-y-3">
-              {truelayer.data.accounts.map(acc => (
-                <div key={acc.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-medium">{acc.name}</p>
-                    <p className="text-slate-500 text-xs">{acc.provider}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white font-semibold">{fmt(acc.balance?.current ?? 0)}</p>
-                    {acc.balance?.available !== acc.balance?.current && (
-                      <p className="text-slate-400 text-xs">{fmt(acc.balance?.available ?? 0)} available</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {truelayer.data.synced_at && (
-              <p className="text-xs text-slate-600 mt-3">
-                Updated {new Date(truelayer.data.synced_at).toLocaleString()}
-              </p>
-            )}
-          </motion.div>
-        )}
         {truelayer.status === 'expired' && (
           <div className="bg-amber-950 border border-amber-900 rounded-xl p-4">
             <p className="text-amber-400 text-sm">Bank connection expired — go to Settings to reconnect.</p>
