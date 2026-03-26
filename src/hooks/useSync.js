@@ -9,12 +9,13 @@ const API_KEY = import.meta.env.VITE_JSONBIN_KEY || ''
 const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`
 
 export const syncConfigured = USE_API || !!(BIN_ID && API_KEY)
+export { USE_API }
 
-function getToken() {
+export function getToken() {
   return localStorage.getItem('hf_session_token') || ''
 }
 
-function authHeaders() {
+export function authHeaders() {
   return {
     'Authorization': `Bearer ${getToken()}`,
     'Content-Type': 'application/json',

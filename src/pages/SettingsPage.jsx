@@ -13,7 +13,7 @@ const CURRENCIES = [
 ]
 
 export function SettingsPage() {
-  const { settings, updateSettings, syncStatus, profileImage, updateProfileImage, refresh } = useFinance()
+  const { settings, updateSettings, syncStatus, profileImage, updateProfileImage, refresh, truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
   const handleLock = () => {
     localStorage.removeItem('hf_session_token')
@@ -228,6 +228,50 @@ export function SettingsPage() {
           onClick={() => setConfirmReset(true)}
           className="w-full py-2.5 rounded-lg bg-red-950 hover:bg-red-900 text-red-400 text-sm font-medium border border-red-900"
         >Reset all data</button>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 className="text-sm font-medium text-slate-400">Bank connection</h2>
+        {truelayer.status === 'connected' && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+              <span className="text-sm text-green-400">Connected</span>
+              {truelayer.connectedAt && (
+                <span className="text-xs text-slate-500 ml-auto">
+                  since {new Date(truelayer.connectedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={syncTruelayer}
+              className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium"
+            >Sync bank data now</button>
+            <button
+              onClick={disconnectTruelayer}
+              className="w-full py-2.5 rounded-lg bg-red-950 hover:bg-red-900 text-red-400 text-sm font-medium border border-red-900"
+            >Disconnect bank</button>
+          </>
+        )}
+        {truelayer.status === 'expired' && (
+          <>
+            <p className="text-sm text-amber-400">Your bank connection has expired. Please reconnect to continue syncing.</p>
+            <button
+              onClick={connectTruelayer}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium"
+            >Reconnect bank</button>
+          </>
+        )}
+        {(truelayer.status === 'disconnected' || truelayer.status === 'idle') && (
+          <button
+            onClick={connectTruelayer}
+            className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium"
+          >Connect your bank</button>
+        )}
+        {truelayer.status === 'loading' && (
+          <p className="text-sm text-slate-500">Checking connection...</p>
+        )}
+        <p className="text-xs text-slate-500">Read-only access via TrueLayer Open Banking. Re-authorisation required every 90 days.</p>
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">

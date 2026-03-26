@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FinanceProvider } from './context/FinanceContext.jsx'
 import { BottomNav } from './components/layout/BottomNav.jsx'
@@ -20,6 +20,12 @@ const pageTransition = { type: 'tween', ease: 'easeInOut', duration: 0.22 }
 
 function App() {
   const [page, setPage] = useState(() => sessionStorage.getItem('hf_page') || 'dashboard')
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('tl')
+    if (!p) return
+    window.history.replaceState({}, '', window.location.pathname)
+    if (p === 'connected') { sessionStorage.setItem('hf_page', 'settings'); setPage('settings') }
+  }, [])
   const dirRef = useRef(0)
 
   const navigate = (next) => {
