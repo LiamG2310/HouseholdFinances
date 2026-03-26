@@ -15,6 +15,7 @@ const CURRENCIES = [
 export function SettingsPage() {
   const { settings, updateSettings, syncStatus, profileImage, updateProfileImage, refresh, truelayer, connectTruelayer, syncTruelayer, disconnectTruelayer } = useFinance()
   const [confirmReset, setConfirmReset] = useState(false)
+  const [devTools, setDevTools] = useState(false)
   const handleLock = () => {
     localStorage.removeItem('hf_session_token')
     localStorage.removeItem('hf_lock_expiry')
@@ -283,8 +284,42 @@ export function SettingsPage() {
         >🔒 Lock app</button>
       </div>
 
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-slate-400">Developer tools</h2>
+          <button
+            onClick={() => setDevTools(d => !d)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${devTools ? 'bg-indigo-600' : 'bg-slate-600'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${devTools ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+        {devTools && (
+          <div className="space-y-2 pt-1">
+            {[
+              { name: 'Vercel',        role: 'Hosting + serverless API functions' },
+              { name: 'Upstash Redis', role: 'Primary data store (bills, income, settings)' },
+              { name: 'TrueLayer',     role: 'Open Banking — read-only bank feed' },
+              { name: 'GitHub',        role: 'Source control + auto-deploy trigger' },
+              { name: 'React 19',      role: 'UI framework' },
+              { name: 'Vite',          role: 'Build tool + dev server' },
+              { name: 'Tailwind v4',   role: 'Styling' },
+              { name: 'Framer Motion', role: 'Animations + page transitions' },
+              { name: 'jose',          role: 'JWT signing + verification' },
+              { name: 'bcryptjs',      role: 'PIN hash comparison' },
+              { name: 'uuid',          role: 'Unique IDs for bills and income' },
+            ].map(({ name, role }) => (
+              <div key={name} className="flex items-start justify-between gap-4">
+                <span className="text-white text-sm font-medium w-32 flex-shrink-0">{name}</span>
+                <span className="text-slate-400 text-xs text-right">{role}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="text-center text-slate-600 text-xs">
-        Data is synced via JSONBin. Nothing is shared with third parties.
+        Nothing is shared with third parties beyond the services listed above.
       </div>
 
       {confirmReset && (
