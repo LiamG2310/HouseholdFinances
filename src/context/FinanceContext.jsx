@@ -52,7 +52,7 @@ export function FinanceProvider({ children }) {
     }, 1500)
   }, [billsApi.bills, billsApi.payments, incomeApi.incomes, settingsApi.settings, profileImage])
 
-  // Load TrueLayer status on mount
+  // Load TrueLayer status on mount, then auto-refresh balance in background
   useEffect(() => {
     if (!USE_API) { setTruelayer({ status: 'idle', data: null, connectedAt: null }); return }
     fetch('/api/truelayer/status', { headers: authHeaders() })
@@ -63,6 +63,12 @@ export function FinanceProvider({ children }) {
           data: bankData || null,
           connectedAt: connectedAt || null,
         })
+        if (connected) {
+          fetch('/api/truelayer/sync', { method: 'POST', headers: authHeaders() })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.bankData) setTruelayer(prev => ({ ...prev, data: d.bankData })) })
+            .catch(() => {})
+        }
       })
       .catch(() => setTruelayer({ status: 'disconnected', data: null, connectedAt: null }))
   }, [])

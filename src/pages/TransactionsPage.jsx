@@ -53,11 +53,12 @@ export function TransactionsPage() {
     else setViewMonth(m => m + 1)
   }
 
-  const load = useCallback(() => {
+  const load = useCallback((bust = false) => {
     if (truelayer.status !== 'connected') return
     setLoading(true)
     setError(null)
-    fetch(`/api/truelayer/transactions?year=${viewYear}&month=${viewMonth}`, { headers: authHeaders() })
+    const qs = `year=${viewYear}&month=${viewMonth}${bust ? '&refresh=true' : ''}`
+    fetch(`/api/truelayer/transactions?${qs}`, { headers: authHeaders() })
       .then(r => r.json())
       .then(({ transactions, error }) => {
         if (error) { setError(error); return }
@@ -182,7 +183,7 @@ export function TransactionsPage() {
         <div className="p-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-white">Transactions</h1>
           <button
-            onClick={refresh}
+            onClick={() => { processedMonthRef.current = null; load(true) }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white text-lg"
           >↻</button>
         </div>

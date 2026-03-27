@@ -11,8 +11,10 @@ export default async function handler(req, res) {
   const month = parseInt(req.query.month || new Date().getMonth() + 1)
 
   const cacheKey = `tl:transactions:${year}-${month}`
-  const cached = await redis.get(cacheKey)
-  if (cached) return res.status(200).json({ transactions: cached })
+  if (req.query.refresh !== 'true') {
+    const cached = await redis.get(cacheKey)
+    if (cached) return res.status(200).json({ transactions: cached })
+  }
 
   const accessToken = await getValidAccessToken()
   if (!accessToken) return res.status(401).json({ error: 'Bank connection expired. Please reconnect.' })
