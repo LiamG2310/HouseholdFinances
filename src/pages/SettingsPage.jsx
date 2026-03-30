@@ -298,6 +298,7 @@ export function SettingsPage() {
         </div>
         {devTools && (
           <div className="space-y-2 pt-1">
+            <p className="text-white text-sm">Hi Mort</p>
             {[
               { name: 'Vercel',        role: 'Hosting + serverless API functions' },
               { name: 'Upstash Redis', role: 'Primary data store (bills, income, settings)' },
