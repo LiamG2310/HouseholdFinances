@@ -60,6 +60,9 @@ export function BillsPage() {
   }
 
   const monthBills = useMemo(() => getBillsMonth(viewYear, viewMonth), [getBillsMonth, viewYear, viewMonth])
+  const bankBalance = truelayer.status === 'connected' && truelayer.data?.accounts?.[0]?.balance
+    ? truelayer.data.accounts[0].balance.current
+    : 0
 
   const handleSave = (data) => {
     if (editBill) updateBill(editBill.id, { ...data, needsAmount: false })
@@ -132,7 +135,7 @@ export function BillsPage() {
                 bill={bill}
                 dueDate={dueDate}
                 paid={isPaid(bill.id, mk)}
-                atRisk={!isPaid(bill.id, mk) && isBillAtRisk(dueDate, incomes, monthBills)}
+                atRisk={!isPaid(bill.id, mk) && isBillAtRisk(dueDate, incomes, monthBills, bankBalance)}
                 onTogglePaid={() => isPaid(bill.id, mk) ? markUnpaid(bill.id, mk) : markPaid(bill.id, mk, 'joint', bill.amount)}
                 onEdit={handleEdit}
                 onDelete={handleDelete}

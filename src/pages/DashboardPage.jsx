@@ -287,7 +287,7 @@ export function DashboardPage() {
                     <p className="text-white font-medium truncate">{bill.name}</p>
                     <p className="text-red-400 text-xs">{formatShortDate(dueDate)}</p>
                   </div>
-                  {isBillAtRisk(dueDate, incomes, monthBills) && (
+                  {isBillAtRisk(dueDate, incomes, monthBills, bankBalance ?? 0) && (
                     <span className="text-amber-400 text-xs">⚡</span>
                   )}
                   <span className="text-white font-semibold">{fmt(bill.amount)}</span>
@@ -304,7 +304,7 @@ export function DashboardPage() {
             <div className="space-y-2">
               {upcoming.map(({ bill, dueDate }) => {
                 const days = daysUntil(dueDate)
-                const atRisk = isBillAtRisk(dueDate, incomes, monthBills)
+                const atRisk = isBillAtRisk(dueDate, incomes, monthBills, bankBalance ?? 0)
                 return (
                   <div key={bill.id} className={`flex items-center gap-3 rounded-xl p-3 border ${atRisk ? 'bg-amber-950 border-amber-800' : 'bg-slate-800 border-slate-700'}`}>
                     <button

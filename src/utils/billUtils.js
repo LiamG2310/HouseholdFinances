@@ -139,7 +139,8 @@ export function cumulativeMonthlyIncome(incomes, upToDay) {
 
 // Returns true if a bill is at risk of not having funds available the day before it's due.
 // monthBills is the full { bill, dueDate }[] array for the month.
-export function isBillAtRisk(dueDate, incomes, monthBills) {
+// currentBalance is the live bank balance (0 if unknown/disconnected).
+export function isBillAtRisk(dueDate, incomes, monthBills, currentBalance = 0) {
   if (!dueDate || !incomes.some(i => i.active && i.payDay)) return false
   const dueDay = new Date(dueDate).getDate()
   const dayBefore = Math.max(0, dueDay - 1)
@@ -147,7 +148,7 @@ export function isBillAtRisk(dueDate, incomes, monthBills) {
   const billsDue = monthBills
     .filter(({ dueDate: d }) => d && new Date(d).getDate() <= dueDay)
     .reduce((s, { bill }) => s + bill.amount, 0)
-  return incomeAvailable < billsDue
+  return (currentBalance + incomeAvailable) < billsDue
 }
 
 export const FREQUENCIES = [
