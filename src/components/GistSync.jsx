@@ -15,6 +15,7 @@ export function GistSync({ children }) {
         if (data.bills !== undefined)    localStorage.setItem('hf_bills',    JSON.stringify(data.bills))
         if (data.income !== undefined)   localStorage.setItem('hf_income',   JSON.stringify(data.income))
         if (data.payments !== undefined) localStorage.setItem('hf_payments', JSON.stringify(data.payments))
+        if (data.incomeReceipts !== undefined) localStorage.setItem('hf_income_receipts', JSON.stringify(data.incomeReceipts))
         if (data.settings && Object.keys(data.settings).length)
                                          localStorage.setItem('hf_settings', JSON.stringify(data.settings))
         if (data.profileImage)           localStorage.setItem('hf_profile_image', data.profileImage)

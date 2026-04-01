@@ -15,7 +15,7 @@ const stagger = {
 }
 
 export function DashboardPage() {
-  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch, incomes } = useFinance()
+  const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch, incomes, isIncomeReceived } = useFinance()
   const [annual, setAnnual] = useState(false)
   const [transactions, setTransactions] = useState(null)
 
@@ -77,27 +77,30 @@ export function DashboardPage() {
 
   const pendingIncome = useMemo(() => {
     if (!isConnectedWithBalance || transactions === null) return null
-    const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
     const creditTxs = transactions.filter(t => t.amount > 0)
     let total = 0
     for (const income of incomes) {
       if (!income.active || income.frequency === 'annual') continue
+      // Manual override: user has confirmed this income arrived
+      if (isIncomeReceived(income.id, mk)) continue
       const expectedMonthly = toMonthly(income.amount, income.frequency)
-      const labelNorm = norm(income.label)
-      if (!labelNorm) continue
-      const words = labelNorm.split(/\s+/).filter(w => w.length > 2)
+      // Match by amount (within 15%) + pay day (within 3 days) for monthly income
       const received = creditTxs
         .filter(tx => {
-          const txNorm = norm(tx.description)
-          const nameMatch = txNorm.includes(labelNorm) || (words.length > 0 && words.some(w => txNorm.includes(w)))
           const amtDiff = Math.abs(tx.amount - income.amount) / income.amount
-          return nameMatch && amtDiff <= 0.15
+          if (amtDiff > 0.15) return false
+          if (income.frequency === 'monthly' && income.payDay) {
+            const txDay = new Date(tx.date).getDate()
+            const diff = Math.abs(txDay - income.payDay)
+            return Math.min(diff, 31 - diff) <= 3
+          }
+          return true
         })
         .reduce((s, tx) => s + tx.amount, 0)
       total += Math.max(0, expectedMonthly - received)
     }
     return total
-  }, [incomes, transactions, isConnectedWithBalance])
+  }, [incomes, transactions, isConnectedWithBalance, isIncomeReceived, mk])
 
   const statusColor = isShortfall ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-green-400'
   const statusBg = truelayer.status === 'loading'

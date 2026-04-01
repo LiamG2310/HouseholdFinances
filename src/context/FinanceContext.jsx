@@ -42,6 +42,7 @@ export function FinanceProvider({ children }) {
         bills: billsApi.bills,
         income: incomeApi.incomes,
         payments: billsApi.payments,
+        incomeReceipts: incomeApi.incomeReceipts,
         profileImage: localStorage.getItem('hf_profile_image') || null,
       })
         .then(() => {

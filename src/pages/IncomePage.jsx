@@ -6,14 +6,23 @@ import { EmptyState } from '../components/shared/EmptyState.jsx'
 import { UndoToast } from '../components/shared/UndoToast.jsx'
 import { toMonthly } from '../utils/billUtils.js'
 
-function IncomeCard({ income, onEdit, onDelete, fmt }) {
+function IncomeCard({ income, onEdit, onDelete, onMarkReceived, onMarkNotReceived, isReceived, fmt }) {
   const monthly = toMonthly(income.amount, income.frequency)
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 border border-slate-700">
+    <div className={`flex items-center gap-3 p-3 rounded-xl border ${isReceived ? 'bg-green-950 border-green-800' : 'bg-slate-800 border-slate-700'}`}>
+      <button
+        onClick={() => isReceived ? onMarkNotReceived(income) : onMarkReceived(income)}
+        title={isReceived ? 'Mark as not received' : 'Mark as received this month'}
+        className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isReceived ? 'bg-green-500 border-green-500 text-white text-xs' : 'border-slate-500 hover:border-green-500'}`}
+      >
+        {isReceived ? '✓' : ''}
+      </button>
       <div className="flex-1 min-w-0">
         <div className="text-white font-medium">{income.label}</div>
-        <div className="text-slate-400 text-sm capitalize">{income.frequency}</div>
+        <div className={`text-sm capitalize ${isReceived ? 'text-green-400' : 'text-slate-400'}`}>
+          {income.frequency}{isReceived ? ' · received' : ''}
+        </div>
       </div>
       <div className="text-right">
         <div className="text-white font-semibold">{fmt(income.amount)}</div>
@@ -33,7 +42,9 @@ function IncomeCard({ income, onEdit, onDelete, fmt }) {
 }
 
 export function IncomePage() {
-  const { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson, fmt, settings, refresh } = useFinance()
+  const { incomes, addIncome, updateIncome, deleteIncome, restoreIncome, monthlyTotal, monthlyByPerson, fmt, settings, refresh, isIncomeReceived, markIncomeReceived, markIncomeNotReceived } = useFinance()
+  const now = new Date()
+  const mk = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const [showForm, setShowForm] = useState(false)
   const [editIncome, setEditIncome] = useState(null)
 
@@ -82,6 +93,9 @@ export function IncomePage() {
                 income={i}
                 onEdit={(inc) => { setEditIncome(inc); setShowForm(true) }}
                 onDelete={handleDelete}
+                onMarkReceived={(inc) => markIncomeReceived(inc.id, mk)}
+                onMarkNotReceived={(inc) => markIncomeNotReceived(inc.id, mk)}
+                isReceived={isIncomeReceived(i.id, mk)}
                 fmt={fmt}
               />
             ))}
