@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext.jsx'
 import { monthLabel, daysUntil, formatShortDate } from '../utils/dateUtils.js'
-import { categoryIcon, CATEGORIES, isBillAtRisk } from '../utils/billUtils.js'
+import { categoryIcon, CATEGORIES, isBillAtRisk, toMonthly } from '../utils/billUtils.js'
+import { authHeaders } from '../hooks/useSync.js'
 
 const card = {
   hidden: { opacity: 0, y: 16 },
@@ -16,6 +17,7 @@ const stagger = {
 export function DashboardPage() {
   const { monthlyTotal, monthlyByPerson, getBillsMonth, isPaid, markPaid, markUnpaid, fmt, settings, profileImage, refresh, truelayer, syncTruelayer, pendingMatches, confirmMatch, dismissMatch, incomes } = useFinance()
   const [annual, setAnnual] = useState(false)
+  const [transactions, setTransactions] = useState(null)
 
   const now = new Date()
   const year = now.getFullYear()
@@ -64,6 +66,38 @@ export function DashboardPage() {
   const isConnectedWithBalance = truelayer.status === 'connected' && truelayer.data?.accounts?.[0]?.balance
   const bankBalance = isConnectedWithBalance ? truelayer.data.accounts[0].balance.current : null
   const afterBills = isConnectedWithBalance ? bankBalance - remainingBills : null
+
+  useEffect(() => {
+    if (!isConnectedWithBalance) return
+    fetch(`/api/truelayer/transactions?year=${year}&month=${month}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(({ transactions }) => setTransactions(transactions || []))
+      .catch(() => setTransactions([]))
+  }, [isConnectedWithBalance, year, month])
+
+  const pendingIncome = useMemo(() => {
+    if (!isConnectedWithBalance || transactions === null) return null
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+    const creditTxs = transactions.filter(t => t.amount > 0)
+    let total = 0
+    for (const income of incomes) {
+      if (!income.active || income.frequency === 'annual') continue
+      const expectedMonthly = toMonthly(income.amount, income.frequency)
+      const labelNorm = norm(income.label)
+      if (!labelNorm) continue
+      const words = labelNorm.split(/\s+/).filter(w => w.length > 2)
+      const received = creditTxs
+        .filter(tx => {
+          const txNorm = norm(tx.description)
+          const nameMatch = txNorm.includes(labelNorm) || (words.length > 0 && words.some(w => txNorm.includes(w)))
+          const amtDiff = Math.abs(tx.amount - income.amount) / income.amount
+          return nameMatch && amtDiff <= 0.15
+        })
+        .reduce((s, tx) => s + tx.amount, 0)
+      total += Math.max(0, expectedMonthly - received)
+    }
+    return total
+  }, [incomes, transactions, isConnectedWithBalance])
 
   const statusColor = isShortfall ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-green-400'
   const statusBg = truelayer.status === 'loading'
@@ -126,6 +160,13 @@ export function DashboardPage() {
                 <p className="text-slate-400 text-sm mt-3 mb-0.5">After upcoming bills</p>
                 <p className={`text-2xl font-semibold ${afterBills < 0 ? 'text-red-400' : afterBills < bankBalance * 0.1 ? 'text-amber-400' : 'text-green-400'}`}>{fmt(afterBills)}</p>
                 {afterBills < 0 && <p className="text-red-400 text-sm mt-1">Bills exceed balance by {fmt(Math.abs(afterBills))}</p>}
+                {pendingIncome !== null && pendingIncome > 0 && (
+                  <>
+                    <p className="text-slate-400 text-sm mt-3 mb-0.5">End of month projection</p>
+                    <p className={`text-xl font-semibold ${(afterBills + pendingIncome) < 0 ? 'text-red-400' : 'text-green-400'}`}>{fmt(afterBills + pendingIncome)}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">{fmt(pendingIncome)} income still to arrive</p>
+                  </>
+                )}
               </>
             ) : (
               <>
